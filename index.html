@@ -3,67 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>YourTube - 2TB Zoro(dev)</title>
+    <title>Cemtube - Zoro(dev)</title>
     <style>
         :root { --orange: #ff9000; --bg: #000; --nav: #0f0f0f; --text: #fff; --card-bg: #121212; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); font-family: 'Roboto', Arial, sans-serif; margin: 0; padding-bottom: 70px; }
         
-        /* --- HIGH SPEED NAV --- */
         nav { background: var(--nav); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid #222; }
         .logo { font-size: 20px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; display: flex; align-items: center; }
         .logo span { background: var(--orange); color: #000; padding: 2px 5px; border-radius: 4px; margin-left: 3px; font-size: 16px; }
-        .user-pill { background: #222; padding: 5px 10px; border-radius: 20px; font-size: 11px; color: #aaa; border: 1px solid #333; }
+        .user-pill { background: #222; padding: 5px 12px; border-radius: 20px; font-size: 11px; color: #888; border: 1px solid #333; font-weight: bold; }
 
-        /* --- MOBILE ADAPTIVE SIDEBAR --- */
-        aside { width: 210px; background: var(--bg); height: calc(100vh - 56px); position: fixed; top: 56px; border-right: 1px solid #111; overflow-y: auto; transition: 0.3s; }
-        .side-item { padding: 12px 20px; cursor: pointer; font-size: 14px; color: #aaa; display: flex; align-items: center; gap: 10px; }
-        .side-item:hover, .active { color: var(--text); background: #1a1a1a; }
-        .active { border-left: 3px solid var(--orange); color: var(--orange); }
+        aside { width: 210px; background: var(--bg); height: calc(100vh - 56px); position: fixed; top: 56px; border-right: 1px solid #111; overflow-y: auto; transition: 0.3s; z-index: 999; }
+        .side-item { padding: 12px 20px; cursor: pointer; font-size: 14px; color: #aaa; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+        .side-item:hover { color: var(--text); background: #1a1a1a; }
+        .active { border-left: 3px solid var(--orange); color: var(--orange); background: rgba(255,144,0,0.05); font-weight: bold; }
 
-        /* --- RESPONSIVE GRID --- */
-        main { margin-left: 210px; margin-top: 56px; padding: 15px; transition: 0.3s; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-        .card { background: transparent; cursor: pointer; border-radius: 8px; overflow: hidden; }
-        .v-thumb { width: 100%; aspect-ratio: 16/9; background: #222; object-fit: cover; border-radius: 12px; transition: transform 0.2s; }
-        .card:active .v-thumb { transform: scale(0.98); }
-        .v-meta { padding: 10px 5px; display: flex; gap: 10px; }
-        .v-info h4 { margin: 0; font-size: 14px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        main { margin-left: 210px; margin-top: 56px; padding: 20px; transition: 0.3s; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: transparent; cursor: pointer; border-radius: 12px; overflow: hidden; }
+        .v-thumb { width: 100%; aspect-ratio: 16/9; background: #222; object-fit: cover; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover .v-thumb { transform: scale(1.02); box-shadow: 0 4px 15px rgba(255,144,0,0.1); }
+        .v-meta { padding: 12px 5px; display: flex; gap: 12px; }
+        .v-avatar { width: 36px; height: 36px; background: #333; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #666; font-weight: bold; }
+        .v-info h4 { margin: 0; font-size: 14px; line-height: 1.4; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .v-info p { margin: 4px 0 0; font-size: 12px; color: #aaa; }
         .checkmark { color: #3ea6ff; font-size: 11px; margin-left: 3px; }
 
-        /* --- PLAYER --- */
         #player-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; }
-        .video-wrapper { width: 100%; max-width: 1000px; margin: 0 auto; aspect-ratio: 16/9; margin-top: 20px; }
+        .video-wrapper { width: 100%; max-width: 1000px; margin: 0 auto; aspect-ratio: 16/9; margin-top: 20px; background: #111; }
         iframe { width: 100%; height: 100%; border: none; }
+        .player-back { font-size: 24px; cursor: pointer; color: #fff; padding: 15px; display: inline-block; }
 
-        /* --- UPLOAD MODAL --- */
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; padding: 20px; align-items: center; }
-        .box { background: #1b1b1b; padding: 25px; border-radius: 15px; width: 100%; max-width: 400px; margin: auto; }
-        .file-label { font-size: 12px; color: #888; display: block; margin-bottom: 8px; text-align: left; }
-        .limit-tag { color: #ff4444; font-weight: bold; margin-left: 5px; }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; padding: 20px; align-items: center; justify-content: center; }
+        .box { background: #1b1b1b; padding: 25px; border-radius: 15px; width: 100%; max-width: 400px; border: 1px solid #333; text-align: center; }
+        .file-label { font-size: 13px; color: #aaa; display: block; margin-bottom: 10px; text-align: left; }
+        .limit-tag { color: var(--orange); font-weight: bold; margin-left: 5px; }
         
-        /* --- MOBILE BOTTOM NAV --- */
         .bottom-nav { display: none; position: fixed; bottom: 0; width: 100%; background: var(--nav); height: 60px; border-top: 1px solid #222; justify-content: space-around; align-items: center; z-index: 1001; }
-        
+        .b-nav-item { font-size: 20px; cursor: pointer; color: #aaa; }
+
         @media (max-width: 768px) {
             aside { display: none; }
             main { margin-left: 0; }
             .bottom-nav { display: flex; }
-            .search-bar { display: none; }
-            .grid { grid-template-columns: 1fr; }
+            .grid { grid-template-columns: 1fr; gap: 25px; }
+            .v-thumb { border-radius: 0; }
         }
 
-        .prog-bg { width: 100%; height: 4px; background: #333; margin: 15px 0; border-radius: 2px; display: none; }
+        .prog-bg { width: 100%; height: 4px; background: #333; margin: 15px 0; border-radius: 2px; display: none; overflow: hidden; }
         .prog-bar { width: 0%; height: 100%; background: var(--orange); transition: 0.3s; }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="#" class="logo" onclick="location.reload()">Your<span>Tube</span></a>
-    <div class="user-pill" id="user-display">Loading...</div>
-    <button class="logout-btn" onclick="logout()" style="background:none; border:none; color:#555; font-size:10px; cursor:pointer;">LOGOUT</button>
+    <a href="#" class="logo" onclick="location.reload()">Cem<span>tube</span></a>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <div class="user-pill" id="user-display">User</div>
+        <button onclick="logout()" style="background:none; border:none; color:#ff4444; font-size:10px; cursor:pointer; font-weight:bold;">LOGOUT</button>
+    </div>
 </nav>
 
 <aside>
@@ -73,60 +72,67 @@
     <hr style="border: 0; border-top: 1px solid #222; margin: 10px 0;">
     <div class="side-item">📂 Library</div>
     <div class="side-item">🕒 History</div>
-    <div class="side-item" onclick="openModal()" style="color:var(--orange)">➕ Upload Video</div>
+    <div class="side-item" onclick="openModal()" style="color:var(--orange); font-weight:bold;">➕ Upload to Cemtube</div>
 </aside>
 
 <main>
+    <h3 id="section-title" style="margin-top:0; font-weight:500; color:#ddd;">Recommended for you</h3>
     <div class="grid" id="main-grid">
-        <div style="color:#333; font-size:12px;">Connecting to 2TB Hub...</div>
+        <div style="color:#555; font-size:13px; font-style:italic;">Initializing Cemtube 2TB Hub...</div>
     </div>
 </main>
 
 <div class="bottom-nav">
-    <div onclick="location.reload()">🏠</div>
-    <div onclick="alert('Shorts coming soon!')">🩳</div>
-    <div onclick="openModal()" style="font-size: 24px;">⊕</div>
-    <div onclick="alert('Subs empty')">🔔</div>
-    <div onclick="logout()">👤</div>
+    <div class="b-nav-item" onclick="location.reload()">🏠</div>
+    <div class="b-nav-item" onclick="alert('Shorts Feature coming soon!')">🩳</div>
+    <div class="b-nav-item" onclick="openModal()" style="font-size: 30px; color:var(--orange)">⊕</div>
+    <div class="b-nav-item" onclick="alert('Notifications empty')">🔔</div>
+    <div class="b-nav-item" onclick="logout()">👤</div>
 </div>
 
 <div id="modal">
     <div class="box">
-        <h3 style="margin-top:0;">Create Post</h3>
-        <label class="file-label">Video File <span class="limit-tag">(MAX 50MB)</span></label>
-        <input type="file" id="vid-input" accept="video/*" style="color:white; font-size:12px; margin-bottom: 20px;">
+        <h3 style="margin-top:0; color:var(--orange);">Cemtube Upload</h3>
+        <p style="font-size: 11px; color: #666; margin-bottom:20px;">Upload speed depends on Google Drive servers.</p>
         
-        <div id="up-status" style="font-size: 10px; color: #666; margin-bottom: 5px;"></div>
+        <label class="file-label">Choose Video <span class="limit-tag">(MAX 50MB)</span></label>
+        <input type="file" id="vid-input" accept="video/*" style="color:white; font-size:12px; margin-bottom: 20px; width:100%;">
+        
+        <div id="up-status" style="font-size: 10px; color: #888; margin-bottom: 8px;"></div>
         <div class="prog-bg" id="prog-bg"><div class="prog-bar" id="prog-bar"></div></div>
         
-        <button id="start-btn" onclick="handleUpload()" style="background:var(--text); color:#000; border:none; padding:10px; width:100%; font-weight:bold; border-radius:20px; cursor:pointer;">Upload</button>
-        <p onclick="closeModal()" style="color:gray; cursor:pointer; margin-top:15px; font-size:12px;">Dismiss</p>
+        <button id="start-btn" onclick="handleUpload()" style="background:var(--text); color:#000; border:none; padding:12px; width:100%; font-weight:bold; border-radius:25px; cursor:pointer; transition:0.2s;">Publish Video</button>
+        <p onclick="closeModal()" style="color:#555; cursor:pointer; margin-top:20px; font-size:12px; font-weight:bold;">DISMISS</p>
     </div>
 </div>
 
 <div id="player-page">
-    <div style="height:50px; display:flex; align-items:center; padding: 0 15px;">
-        <span onclick="closePlayer()" style="font-size:24px; cursor:pointer;">✕</span>
-    </div>
+    <span class="player-back" onclick="closePlayer()">✕ Close Player</span>
     <div class="video-wrapper" id="player-target"></div>
-    <div style="padding: 15px;">
-        <h4 id="p-title" style="margin:0; font-size:18px;"></h4>
-        <p id="p-uploader" style="color:#aaa; font-size:13px; margin-top:8px;"></p>
+    <div style="padding: 20px; max-width:1000px; margin: 0 auto;">
+        <h4 id="p-title" style="margin:0; font-size:20px; font-weight:500;"></h4>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:15px; border-top:1px solid #222; padding-top:15px;">
+            <div class="v-avatar" id="p-avatar"></div>
+            <div>
+                <p id="p-uploader" style="color:#fff; font-size:14px; margin:0; font-weight:bold;"></p>
+                <p style="color:#aaa; font-size:12px; margin:4px 0 0;">Published via Cemtube Hub</p>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb45LMkWdIyvyX6l19hF1CeTkutiiRDK5HeV0IcYXNrTq4Quxh6sQ7cg3bJyUW-1_y/exec";
     const THUMB = "https://raw.githubusercontent.com/portonvpn/cemtube/main/t.png";
-    let currentUser = localStorage.getItem('yt_user');
+    let currentUser = localStorage.getItem('cem_user');
 
-    function logout() { localStorage.removeItem('yt_user'); location.reload(); }
+    function logout() { localStorage.removeItem('cem_user'); location.reload(); }
 
     async function initUser() {
         if (!currentUser) {
-            currentUser = prompt("Channel Name:");
+            currentUser = prompt("Welcome to Cemtube! Enter your Channel Name:");
             if (!currentUser) return initUser();
-            localStorage.setItem('yt_user', currentUser);
+            localStorage.setItem('cem_user', currentUser);
         }
         document.getElementById('user-display').innerText = currentUser;
     }
@@ -137,43 +143,47 @@
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
             grid.innerHTML = "";
-            data.reverse().forEach(v => { // Newest first
+            data.reverse().forEach(v => {
                 const isZoro = v.uploader.toLowerCase().includes('zoro');
                 const name = isZoro ? 'Zoro(dev)' : v.uploader;
+                const initial = name.charAt(0).toUpperCase();
+                
                 grid.innerHTML += `
                     <div class="card" onclick="openPlayer('${v.id}', '${v.name}', '${name}', ${isZoro})">
                         <img src="${THUMB}" class="v-thumb" loading="lazy">
                         <div class="v-meta">
-                            <div style="width:36px; height:36px; background:#333; border-radius:50%; flex-shrink:0;"></div>
+                            <div class="v-avatar">${initial}</div>
                             <div class="v-info">
                                 <h4>${v.name}</h4>
-                                <p>${name}${isZoro ? '<span class="checkmark">✔</span>' : ''} • 2TB Storage</p>
+                                <p>${name}${isZoro ? '<span class="checkmark">✔</span>' : ''} • Cemtube 2TB</p>
                             </div>
                         </div>
                     </div>`;
             });
-        } catch (e) { grid.innerHTML = "Offline. Check Script URL."; }
+        } catch (e) { grid.innerHTML = "<div style='color:red'>Failed to connect to Cemtube servers. Check Script URL.</div>"; }
     }
 
     async function handleUpload() {
         const file = document.getElementById('vid-input').files[0];
-        if(!file) return alert("Select file!");
-        if(file.size > 50 * 1024 * 1024) return alert("File too big! Max 50MB for Zoro Hub.");
+        if(!file) return alert("Please select a video file!");
+        if(file.size > 50 * 1024 * 1024) return alert("Cemtube Limit: Files must be under 50MB.");
 
         const btn = document.getElementById('start-btn');
-        btn.disabled = true; btn.innerText = "Processing...";
+        const status = document.getElementById('up-status');
+        btn.disabled = true; btn.style.opacity = "0.5";
         document.getElementById('prog-bg').style.display = 'block';
-        document.getElementById('up-status').innerText = "Compressing for 2TB stream...";
+        status.innerText = "Syncing with Cemtube 2TB Drive...";
         
         const reader = new FileReader();
         reader.onload = function() {
-            document.getElementById('prog-bar').style.width = '70%';
+            document.getElementById('prog-bar').style.width = '75%';
             fetch(SCRIPT_URL, { 
                 method: "POST", mode: "no-cors", 
                 body: new URLSearchParams({ "videoData": reader.result.split(',')[1], "videoMime": file.type, "videoName": file.name, "username": currentUser }) 
             }).then(() => {
                 document.getElementById('prog-bar').style.width = '100%';
-                location.reload();
+                status.innerText = "Upload successful! Refreshing...";
+                setTimeout(() => location.reload(), 1500);
             });
         }
         reader.readAsDataURL(file);
@@ -183,11 +193,18 @@
         document.getElementById('player-page').style.display = 'block';
         document.getElementById('p-title').innerText = name;
         document.getElementById('p-uploader').innerHTML = uploader + (isZoro ? '<span class="checkmark">✔</span>' : '');
+        document.getElementById('p-avatar').innerText = uploader.charAt(0).toUpperCase();
         document.getElementById('player-target').innerHTML = `<iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay"></iframe>`;
         window.scrollTo(0,0);
+        document.body.style.overflow = "hidden";
     }
 
-    function closePlayer() { document.getElementById('player-page').style.display = 'none'; document.getElementById('player-target').innerHTML = ""; }
+    function closePlayer() { 
+        document.getElementById('player-page').style.display = 'none'; 
+        document.getElementById('player-target').innerHTML = ""; 
+        document.body.style.overflow = "auto";
+    }
+    
     function openModal() { document.getElementById('modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
     
