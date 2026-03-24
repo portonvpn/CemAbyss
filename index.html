@@ -5,235 +5,179 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cemtube - Zoro(dev)</title>
     <style>
-        :root { --orange: #ff9000; --bg: #000; --nav: #0f0f0f; --text: #fff; --card-bg: #121212; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); font-family: 'Roboto', Arial, sans-serif; margin: 0; padding-bottom: 70px; }
+        :root { --orange: #ff9000; --bg: #000; --nav: #0f0f0f; --text: #fff; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 70px; overflow-x: hidden; }
         
         nav { background: var(--nav); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid #222; }
-        .logo { font-size: 20px; font-weight: bold; cursor: pointer; color: white; text-decoration: none; display: flex; align-items: center; }
-        .logo span { background: var(--orange); color: #000; padding: 2px 5px; border-radius: 4px; margin-left: 3px; font-size: 16px; }
-        .user-pill { background: #222; padding: 5px 12px; border-radius: 20px; font-size: 11px; color: #888; border: 1px solid #333; font-weight: bold; }
+        .logo { font-size: 20px; font-weight: bold; color: white; text-decoration: none; display: flex; align-items: center; }
+        .logo span { background: var(--orange); color: #000; padding: 2px 5px; border-radius: 4px; margin-left: 4px; font-size: 16px; }
+        
+        .user-box { display: flex; align-items: center; gap: 10px; }
+        .logout-btn { background: #222; border: 1px solid #444; color: #ff4444; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
 
-        aside { width: 210px; background: var(--bg); height: calc(100vh - 56px); position: fixed; top: 56px; border-right: 1px solid #111; overflow-y: auto; z-index: 999; }
-        .side-item { padding: 12px 20px; cursor: pointer; font-size: 14px; color: #aaa; display: flex; align-items: center; gap: 12px; }
-        .side-item:hover { color: var(--text); background: #1a1a1a; }
-        .active { border-left: 3px solid var(--orange); color: var(--orange); background: rgba(255,144,0,0.05); font-weight: bold; }
+        aside { width: 210px; background: var(--bg); height: 100vh; position: fixed; top: 56px; border-right: 1px solid #111; z-index: 999; }
+        .side-item { padding: 15px 24px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: #aaa; font-size: 14px; }
+        .side-item:hover { color: var(--orange); background: #1a1a1a; }
 
-        main { margin-left: 210px; margin-top: 56px; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: transparent; cursor: pointer; border-radius: 12px; overflow: hidden; }
-        .v-thumb { width: 100%; aspect-ratio: 16/9; background: #222; object-fit: cover; border-radius: 12px; transition: 0.2s; }
-        .card:hover .v-thumb { transform: scale(1.02); }
-        .v-meta { padding: 12px 5px; display: flex; gap: 12px; }
-        .v-avatar { width: 36px; height: 36px; background: #333; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; font-weight: bold; }
-        .v-info h4 { margin: 0; font-size: 14px; line-height: 1.4; color: var(--text); }
-        .v-info p { margin: 4px 0 0; font-size: 12px; color: #aaa; }
-        .checkmark { color: #3ea6ff; font-size: 11px; margin-left: 3px; }
+        main { margin-left: 210px; margin-top: 70px; padding: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .card { cursor: pointer; }
+        .v-thumb { width: 100%; aspect-ratio: 16/9; background: #222; border-radius: 12px; object-fit: cover; border: 1px solid #333; }
+        .v-meta { display: flex; gap: 12px; padding: 12px 5px; }
+        .v-avatar { width: 36px; height: 36px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--orange); border: 1px solid #444; }
 
         #player-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; overflow-y: auto; }
-        .video-wrapper { width: 100%; max-width: 1000px; margin: 0 auto; aspect-ratio: 16/9; margin-top: 10px; background: #111; }
+        .player-inner { max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
+        .video-wrapper { width: 100%; aspect-ratio: 16/9; background: #111; margin-top: 10px; border-radius: 12px; overflow: hidden; }
         iframe { width: 100%; height: 100%; border: none; }
-        .player-back { font-size: 18px; cursor: pointer; color: #fff; padding: 15px; display: inline-block; font-weight: bold; }
-
-        .action-bar { display: flex; gap: 10px; margin: 15px 0; }
-        .btn-act { background: #222; border: none; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; font-weight: bold; }
         
-        .comment-box { margin-top: 20px; border-top: 1px solid #222; padding-top: 20px; }
-        .c-input-grp { display: flex; gap: 10px; margin-bottom: 20px; }
-        .c-input-grp input { flex: 1; background: transparent; border: none; border-bottom: 1px solid #333; color: white; padding: 5px; outline: none; }
-        .c-item { display: flex; gap: 12px; margin-bottom: 15px; }
+        .p-details { padding: 20px; }
+        .p-title { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
+        .p-channel { display: flex; align-items: center; gap: 12px; border-top: 1px solid #222; padding-top: 15px; }
+        .checkmark { color: #3ea6ff; font-size: 11px; margin-left: 3px; }
 
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; }
-        .box { background: #1b1b1b; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
-        
-        .bottom-nav { display: none; position: fixed; bottom: 0; width: 100%; background: var(--nav); height: 60px; border-top: 1px solid #222; justify-content: space-around; align-items: center; z-index: 1001; }
-        
-        @media (max-width: 768px) {
-            aside { display: none; }
-            main { margin-left: 0; }
-            .bottom-nav { display: flex; }
-            .grid { grid-template-columns: 1fr; }
-        }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; align-items: center; justify-content: center; }
+        .box { background: #1b1b1b; padding: 25px; border-radius: 15px; width: 400px; text-align: center; border: 1px solid #333; }
+        .prog-bg { width: 100%; height: 6px; background: #333; margin: 15px 0; border-radius: 3px; display: none; overflow: hidden; }
+        .prog-bar { width: 0%; height: 100%; background: var(--orange); }
 
-        .prog-bg { width: 100%; height: 4px; background: #333; margin: 15px 0; border-radius: 2px; display: none; overflow: hidden; }
-        .prog-bar { width: 0%; height: 100%; background: var(--orange); transition: 0.3s; }
+        .b-nav { display: none; position: fixed; bottom: 0; width: 100%; background: #000; height: 60px; border-top: 1px solid #222; justify-content: space-around; align-items: center; z-index: 1001; }
+
+        @media (max-width: 768px) { aside { display: none; } main { margin-left: 0; } .b-nav { display: flex; } .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="#" class="logo" onclick="location.reload()">Cem<span>tube</span></a>
-    <div style="display:flex; align-items:center; gap:10px;">
-        <div class="user-pill" id="user-display">User</div>
-        <button onclick="logout()" style="background:none; border:none; color:#ff4444; font-size:10px; cursor:pointer;">LOGOUT</button>
+    <a href="#" class="logo">Cem<span>tube</span></a>
+    <div class="user-box">
+        <span id="user-display" style="font-size: 11px; color: #888;"></span>
+        <button class="logout-btn" onclick="logout()">LOGOUT</button>
     </div>
 </nav>
 
 <aside>
-    <div class="side-item active">🏠 Home</div>
-    <div class="side-item">🔥 Trending</div>
-    <div class="side-item">🎬 Subscriptions</div>
-    <div class="side-item" onclick="openModal()" style="color:var(--orange); font-weight:bold; margin-top:10px;">➕ Upload</div>
+    <div class="side-item" onclick="loadHome()">🏠 Home</div>
+    <div class="side-item" onclick="openModal()">📤 Upload</div>
 </aside>
 
-<main>
-    <h3 id="section-title" style="margin-top:0; font-weight:500; color:#ddd;">Recommended</h3>
-    <div class="grid" id="main-grid">
-        <div style="color:#555; font-size:13px;">Loading Cemtube...</div>
-    </div>
-</main>
+<main><div class="grid" id="v-grid">Loading Hub...</div></main>
 
-<div class="bottom-nav">
-    <div onclick="location.reload()">🏠</div>
-    <div onclick="openModal()" style="font-size: 24px; color:var(--orange)">⊕</div>
-    <div onclick="logout()">👤</div>
+<div class="b-nav">
+    <span onclick="loadHome()" style="font-size:24px;">🏠</span>
+    <span onclick="openModal()" style="font-size:24px;">➕</span>
+    <span onclick="logout()" style="font-size:24px;">👤</span>
 </div>
 
 <div id="modal">
     <div class="box">
-        <h3 style="color:var(--orange);">Upload Video</h3>
-        <input type="file" id="vid-input" accept="video/*" style="color:white; margin: 20px 0; width:100%;">
+        <h3 style="color:var(--orange); margin:0;">Upload</h3>
+        <input type="file" id="vid-input" accept="video/*" style="color:white; margin: 20px 0; width: 100%;">
         <div class="prog-bg" id="prog-bg"><div class="prog-bar" id="prog-bar"></div></div>
-        <button id="start-btn" onclick="handleUpload()" style="background:#fff; color:#000; border:none; padding:12px; width:100%; font-weight:bold; border-radius:25px; cursor:pointer;">Publish</button>
-        <p onclick="closeModal()" style="color:#555; cursor:pointer; margin-top:20px; font-size:12px;">Close</p>
+        <button id="up-btn" onclick="handleUpload()" style="background:white; color:black; border:none; padding:10px 25px; border-radius:20px; font-weight:bold; cursor:pointer; width:100%;">Publish</button>
+        <p onclick="closeModal()" style="color:gray; cursor:pointer; margin-top:15px; font-size:12px;">Cancel</p>
     </div>
 </div>
 
 <div id="player-page">
-    <span class="player-back" onclick="closePlayer()">✕ Close</span>
-    <div class="video-wrapper" id="player-target"></div>
-    
-    <div style="padding: 15px; max-width:1000px; margin: 0 auto;">
-        <h4 id="p-title" style="margin:0; font-size:18px;"></h4>
-        
-        <div class="action-bar">
-            <button class="btn-act" onclick="addLike()">👍 <span id="l-count">0</span></button>
-            <button class="btn-act">Share</button>
-        </div>
-
-        <div style="display:flex; align-items:center; gap:10px; border-top:1px solid #222; padding-top:15px;">
-            <div class="v-avatar" id="p-avatar"></div>
-            <div>
-                <p id="p-uploader" style="font-size:14px; margin:0; font-weight:bold;"></p>
-                <p style="color:#888; font-size:12px; margin:2px 0 0;">Cemtube Hub Verified</p>
+    <div class="player-inner">
+        <div style="padding: 15px;"><span onclick="closePlayer()" style="cursor:pointer; font-size: 30px; color:white;">❌</span></div>
+        <div class="video-wrapper" id="p-target"></div>
+        <div class="p-details">
+            <div class="p-title" id="p-title">Video Title</div>
+            <div class="p-channel">
+                <div class="v-avatar" id="chan-avatar">Z</div>
+                <div>
+                    <div style="font-weight:bold; font-size:15px;" id="chan-name">Zoro(dev)<span class="checkmark">✔</span></div>
+                    <div style="color:#888; font-size:12px;">0 subscribers</div>
+                </div>
             </div>
-        </div>
-
-        <div class="comment-box">
-            <div class="c-input-grp">
-                <input type="text" id="c-input" placeholder="Add a comment...">
-                <button onclick="addComment()" style="background:var(--orange); border:none; border-radius:5px; padding:0 15px; color:#000; font-weight:bold;">Post</button>
+            <div style="background:#111; padding:15px; border-radius:12px; margin-top:20px; font-size:13px; line-height:1.6; color:#ddd;">
+                <p>Thi video is being streamed from my gdrive so performance may varie (5.6 beta)</p>
             </div>
-            <div id="c-list"></div>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxb45LMkWdIyvyX6l19hF1CeTkutiiRDK5HeV0IcYXNrTq4Quxh6sQ7cg3bJyUW-1_y/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLwRLoSad_nhxnkJvVEyVN6iZd5G24jIacKEFzm_7S-70UJRUb4H3Q2GmyKew6Cs55/exec"; 
     const THUMB = "https://raw.githubusercontent.com/portonvpn/cemtube/main/t.png";
-    let currentUser = localStorage.getItem('cem_user');
-    let activeId = "";
+    
+    let user = localStorage.getItem('cem_user') || prompt("Channel Name:");
+    if(!user) user = "Zoro";
+    localStorage.setItem('cem_user', user);
+    document.getElementById('user-display').innerText = user;
 
     function logout() { localStorage.removeItem('cem_user'); location.reload(); }
 
-    async function initUser() {
-        if (!currentUser) {
-            currentUser = prompt("Channel Name:");
-            if (!currentUser) return initUser();
-            localStorage.setItem('cem_user', currentUser);
-        }
-        document.getElementById('user-display').innerText = currentUser;
-    }
-
     async function loadHome() {
-        const grid = document.getElementById('main-grid');
+        const grid = document.getElementById('v-grid');
         try {
             const res = await fetch(SCRIPT_URL);
-            const data = await res.json();
-            grid.innerHTML = "";
-            data.reverse().forEach(v => {
+            let data = await res.json();
+            data.reverse(); // Newest first
+
+            grid.innerHTML = data.map(v => {
                 const isZoro = v.uploader.toLowerCase().includes('zoro');
                 const name = isZoro ? 'Zoro(dev)' : v.uploader;
-                grid.innerHTML += `
-                    <div class="card" onclick="openPlayer('${v.id}', '${v.name}', '${name}', ${isZoro})">
-                        <img src="${THUMB}" class="v-thumb">
-                        <div class="v-meta">
-                            <div class="v-avatar">${name.charAt(0).toUpperCase()}</div>
-                            <div class="v-info">
-                                <h4>${v.name}</h4>
-                                <p>${name}${isZoro ? '<span class="checkmark">✔</span>' : ''}</p>
-                            </div>
+                return `
+                <div class="card" onclick="play('${v.id}','${v.name}','${name}', ${isZoro})">
+                    <img class="v-thumb" src="${THUMB}">
+                    <div class="v-meta">
+                        <div class="v-avatar">${name.charAt(0).toUpperCase()}</div>
+                        <div>
+                            <div style="font-weight:bold; font-size:14px;">${v.name}</div>
+                            <div style="color:#aaa; font-size:11px;">${name}${isZoro ? '<span class="checkmark">✔</span>' : ''}</div>
                         </div>
-                    </div>`;
-            });
-        } catch (e) { grid.innerHTML = "Server connection failed."; }
+                    </div>
+                </div>`;
+            }).join('');
+        } catch(e) { grid.innerHTML = "Sync Error."; }
     }
 
-    function handleUpload() {
+    async function handleUpload() {
         const file = document.getElementById('vid-input').files[0];
-        if(!file || file.size > 50 * 1024 * 1024) return alert("File missing or over 50MB");
-        
-        document.getElementById('prog-bg').style.display = 'block';
-        const reader = new FileReader();
-        reader.onload = function() {
-            fetch(SCRIPT_URL, { 
-                method: "POST", mode: "no-cors", 
-                body: new URLSearchParams({ "videoData": reader.result.split(',')[1], "videoMime": file.type, "videoName": file.name, "username": currentUser }) 
-            }).then(() => location.reload());
-        }
-        reader.readAsDataURL(file);
+        if(!file) return alert("Select video!");
+        const btn = document.getElementById('up-btn');
+        const bar = document.querySelector('.prog-bar');
+        const bg = document.getElementById('prog-bg');
+        btn.disabled = true; btn.innerText = "Processing...";
+        bg.style.display = 'block';
+
+        try {
+            const ticketRes = await fetch(SCRIPT_URL, { method: "POST", body: new URLSearchParams({ videoName: file.name, videoMime: file.type, username: user }) });
+            const uploadUrl = await ticketRes.text();
+            const xhr = new XMLHttpRequest();
+            xhr.open("PUT", uploadUrl, true);
+            xhr.upload.onprogress = (e) => {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                bar.style.width = percent + "%";
+                btn.innerText = `Uploading: ${percent}%`;
+            };
+            xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) { location.reload(); } };
+            xhr.send(file);
+        } catch(err) { alert("Error."); btn.disabled = false; }
     }
 
-    function openPlayer(id, name, uploader, isZoro) {
-        activeId = id;
+    function play(id, title, uploader, isZoro) {
         document.getElementById('player-page').style.display = 'block';
-        document.getElementById('p-title').innerText = name;
-        document.getElementById('p-uploader').innerHTML = uploader + (isZoro ? '<span class="checkmark">✔</span>' : '');
-        document.getElementById('p-avatar').innerText = uploader.charAt(0).toUpperCase();
-        document.getElementById('player-target').innerHTML = `<iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay"></iframe>`;
-        document.getElementById('l-count').innerText = "0";
-        renderComments();
+        document.getElementById('p-title').innerText = title;
+        document.getElementById('chan-name').innerHTML = uploader + (isZoro ? '<span class="checkmark">✔</span>' : '');
+        document.getElementById('chan-avatar').innerText = uploader.charAt(0).toUpperCase();
+        document.getElementById('p-target').innerHTML = `<iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay" allowfullscreen></iframe>`;
+        document.body.style.overflow = "hidden";
     }
 
     function closePlayer() { 
         document.getElementById('player-page').style.display = 'none'; 
-        document.getElementById('player-target').innerHTML = ""; 
+        document.getElementById('p-target').innerHTML = ""; 
+        document.body.style.overflow = "auto";
     }
-
-    function addLike() {
-        let l = document.getElementById('l-count');
-        l.innerText = parseInt(l.innerText) + 1;
-    }
-
-    function addComment() {
-        const inp = document.getElementById('c-input');
-        if(!inp.value) return;
-        let db = JSON.parse(localStorage.getItem('cem_comments') || "[]");
-        db.push({ vid: activeId, user: currentUser, text: inp.value });
-        localStorage.setItem('cem_comments', JSON.stringify(db));
-        inp.value = "";
-        renderComments();
-    }
-
-    function renderComments() {
-        const list = document.getElementById('c-list');
-        let db = JSON.parse(localStorage.getItem('cem_comments') || "[]");
-        list.innerHTML = db.filter(c => c.vid === activeId).reverse().map(c => `
-            <div class="c-item">
-                <div class="v-avatar" style="width:30px; height:30px; font-size:12px;">${c.user.charAt(0)}</div>
-                <div>
-                    <div style="font-size:12px; color:#888;">@${c.user}</div>
-                    <div style="font-size:14px;">${c.text}</div>
-                </div>
-            </div>
-        `).join('');
-    }
-
+    
     function openModal() { document.getElementById('modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
-    
-    initUser().then(loadHome);
+    loadHome();
 </script>
 </body>
 </html>
