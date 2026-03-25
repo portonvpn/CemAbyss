@@ -3,73 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cemtube - Zoro(dev)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Inter:wght@800&display=swap" rel="stylesheet">
+    <title>CemAbyss | Zoro(dev)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --orange: #ff9000; --bg: #0f0f0f; --nav: rgba(15, 15, 15, 0.95); --text: #fff; --border: rgba(255,255,255,0.08); }
-        * { box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; padding-bottom: 70px; overflow-x: hidden; }
-        nav { background: var(--nav); backdrop-filter: blur(12px); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid var(--border); }
-        .logo { font-size: 20px; font-weight: bold; color: white; text-decoration: none; display: flex; align-items: center; }
-        .logo span { background: var(--orange); color: #000; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-size: 15px; }
-        .user-controls { display: flex; align-items: center; gap: 12px; }
-        .logout-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); color: #ff5555; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 11px; font-weight: bold; }
-        aside { width: 220px; background: var(--bg); height: 100vh; position: fixed; top: 56px; border-right: 1px solid var(--border); z-index: 999; }
-        .side-item { padding: 14px 24px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: #888; font-size: 14px; }
-        main { margin-left: 220px; margin-top: 75px; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card { cursor: pointer; transition: 0.3s cubic-bezier(0.2, 1, 0.3, 1); }
-        .v-thumb-wrap { width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
-        .v-thumb-letter { font-family: 'Inter', sans-serif; font-size: 64px; font-weight: 800; color: rgba(255,255,255,0.25); text-transform: uppercase; z-index: 2; }
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .box { background: #181818; padding: 30px; border-radius: 20px; width: 420px; text-align: center; border: 1px solid #333; }
-        .prog-bg { width: 100%; height: 8px; background: #222; margin: 15px 0; border-radius: 4px; display: none; overflow: hidden; }
-        .prog-bar { width: 0%; height: 100%; background: var(--orange); box-shadow: 0 0 15px var(--orange); transition: 0.3s; }
-        .status-msg { font-size: 11px; color: var(--orange); margin-top: 8px; font-family: monospace; display: block; }
-        #player-page { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; overflow-y: auto; }
-        .player-layout { display: grid; grid-template-columns: 1fr 360px; gap: 24px; max-width: 1500px; margin: 0 auto; padding: 20px; }
-        .video-wrapper { width: 100%; aspect-ratio: 16/9; background: #111; border-radius: 16px; overflow: hidden; }
+        :root { --primary: #a855f7; --secondary: #22d3ee; --bg: #020202; --glass: rgba(5, 5, 5, 0.98); --border: rgba(255, 255, 255, 0.08); --text: #ffffff; --text-dim: #71717a; }
+        * { box-sizing: border-box; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 0px; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow: hidden; }
+        
+        #auth-shield { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
+        .auth-box { background: #0a0a0a; padding: 40px; border-radius: 24px; border: 1px solid var(--border); width: 90%; max-width: 360px; text-align: center; }
+        
+        nav { background: var(--glass); backdrop-filter: blur(30px); height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid var(--border); }
+        .logo { font-size: 18px; font-weight: 800; color: white; text-decoration: none; }
+        .logo span { color: var(--primary); }
+
+        aside { width: 240px; height: 100vh; position: fixed; top: 60px; padding: 25px 15px; background: var(--bg); border-right: 1px solid var(--border); z-index: 999; }
+        .side-item { padding: 12px 18px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-dim); border-radius: 12px; margin-bottom: 6px; font-size: 14px; }
+        .side-item:hover, .side-item.active { background: rgba(255,255,255,0.05); color: white; }
+        .side-item.active { color: var(--primary); background: rgba(168, 85, 247, 0.12); }
+
+        main { margin-left: 240px; margin-top: 60px; padding: 25px; height: calc(100vh - 60px); overflow-y: auto; }
+        .chip-bar { display: flex; gap: 10px; margin-bottom: 25px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .chip { background: rgba(255,255,255,0.04); padding: 8px 18px; border-radius: 100px; font-size: 12px; white-space: nowrap; cursor: pointer; border: 1px solid var(--border); font-weight: 600; }
+        .chip.active { background: white; color: black; border-color: white; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        .card { position: relative; }
+        .v-thumb-wrap { width: 100%; aspect-ratio: 16/9; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; background: #050505; position: relative; z-index: 1; }
+        .v-img-prev { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; }
+        .v-letter { font-size: 50px; font-weight: 800; color: rgba(255,255,255,0.05); text-transform: uppercase; z-index: 1; }
+        
+        .dots-btn { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; border: 1px solid var(--border); }
+        .dropdown { display: none; position: absolute; top: 50px; right: 12px; background: #0f0f0f; border: 1px solid var(--border); border-radius: 14px; width: 180px; z-index: 100; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .dropdown div { padding: 12px 16px; font-size: 13px; cursor: pointer; color: #bbb; display: flex; align-items: center; gap: 10px; }
+        .dropdown div:hover { background: rgba(255,255,255,0.08); color: white; }
+
+        .v-info { display: flex; gap: 14px; padding: 14px 4px; background: transparent !important; border: none !important; position: relative; z-index: 5; }
+        .v-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; border: none !important; box-shadow: none !important; }
+        .v-title { font-weight: 700; font-size: 15px; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .v-meta { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
+        .modal-box { background: #0a0a0a; padding: 30px; border-radius: 20px; width: 90%; max-width: 420px; border: 1px solid var(--border); text-align: center; }
+        input, select, textarea { width: 100%; background: #111; border: 1px solid var(--border); padding: 14px; border-radius: 10px; color: white; margin-bottom: 12px; outline: none; font-family: inherit; }
+
+        #player-page { display: none; position: fixed; inset: 0; background: #000; z-index: 2000; overflow-y: auto; }
+        .player-layout { display: grid; grid-template-columns: 1fr 380px; gap: 30px; max-width: 1700px; margin: 0 auto; padding: 80px 30px 30px; }
+        .video-wrapper { width: 100%; aspect-ratio: 16/9; background: #050505; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
+        .large-img { width: 100%; height: 100%; object-fit: contain; }
         iframe { width: 100%; height: 100%; border: none; }
-        @media (max-width: 768px) { aside { display: none; } main { margin-left: 0; } }
+        .p-desc { margin-top: 25px; padding: 25px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--border); text-align: left; }
+
+        /* NEW PLAYER UI ELEMENTS */
+        .p-channel-row { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; flex-wrap: wrap; gap: 15px; }
+        .p-channel-left { display: flex; align-items: center; gap: 12px; }
+        .sub-btn { background: #fff; color: #000; padding: 8px 18px; border-radius: 100px; font-weight: 800; font-size: 13px; cursor: pointer; border: none; }
+        .p-actions { display: flex; gap: 10px; }
+        .p-action-btn { background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 100px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); }
+
+        @media (max-width: 900px) {
+            aside { width: 100%; height: 65px; bottom: 0; top: auto; flex-direction: row; display: flex; border-right: none; border-top: 1px solid var(--border); padding: 0 10px; justify-content: space-around; }
+            .side-item { flex-direction: column; font-size: 10px; gap: 4px; padding: 8px 0; margin: 0; border-radius: 0; }
+            main { margin-left: 0; padding-bottom: 90px; }
+            .player-layout { grid-template-columns: 1fr; }
+            .grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
-<body>
+<body onclick="closeAllMenus()">
+
+<div id="auth-shield">
+    <div class="auth-box">
+        <h2 id="auth-title" style="margin-top:0">System Access</h2>
+        <input type="text" id="login-user" placeholder="Username">
+        <input type="password" id="login-pass" placeholder="Password">
+        <button onclick="handleAuth()" id="auth-btn" style="width:100%; padding:14px; background:white; color:black; border:none; border-radius:12px; font-weight:800; cursor:pointer;">LOG IN</button>
+        <p onclick="toggleRegister()" style="font-size:12px; color:var(--secondary); margin-top:20px; cursor:pointer;">Register Identity</p>
+    </div>
+</div>
 
 <nav>
-    <a href="#" class="logo" onclick="location.reload()">Cem<span>tube</span></a>
-    <div class="user-controls">
-        <span id="user-display" style="font-size: 13px; color: #888;"></span>
-        <button class="logout-btn" onclick="logout()">LOGOUT</button>
+    <a href="#" class="logo" onclick="location.reload()">CEM<span>ABYSS</span></a>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <span id="user-display" style="font-size: 11px; color: var(--secondary); font-weight: 800;"></span>
+        <button onclick="app.logout()" style="background:transparent; border:1px solid #333; color:#666; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:10px; font-weight:800;">LOGOUT</button>
     </div>
 </nav>
 
 <aside>
-    <div class="side-item" onclick="location.reload()">🏠 Home</div>
-    <div class="side-item" onclick="openModal()">📤 Upload</div>
+    <div class="side-item active" onclick="app.setContext('home', this)">🏠 Feed</div>
+    <div class="side-item" onclick="app.setContext('imageboard', this)">🖼️ Images</div>
+    <div class="side-item" onclick="app.setContext('myclips', this)">📁 Studio</div>
+    <div class="side-item" onclick="app.setContext('favorites', this)">❤️ Liked</div>
+    <div class="side-item" onclick="openUpload()">📤 Upload</div>
 </aside>
 
-<main><div class="grid" id="v-grid">Loading Hub...</div></main>
+<main>
+    <div class="chip-bar" id="category-bar"></div>
+    <div class="grid" id="v-grid"></div>
+</main>
 
-<div id="modal">
-    <div class="box">
-        <h3 style="color:var(--orange); margin-bottom:20px;">Upload Video</h3>
-        <input type="file" id="vid-input" accept="video/*" style="color:white; margin-bottom: 20px; width: 100%;">
-        <div class="prog-bg" id="prog-bg"><div class="prog-bar" id="prog-bar"></div></div>
-        <span id="status-feed" class="status-msg"></span>
-        <button id="up-btn" onclick="handleUpload()" style="background:white; color:black; border:none; padding:14px; border-radius:25px; font-weight:bold; cursor:pointer; width:100%;">Publish Now</button>
-        <p onclick="closeModal()" style="color:gray; cursor:pointer; margin-top:20px; font-size:12px;">Cancel</p>
+<div id="modal-upload" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Transmitting Data</h3>
+        <input type="file" id="vid-input">
+        <div id="prog-bg" style="width:100%;height:6px;background:#111;margin:20px 0;display:none;border-radius:10px;overflow:hidden;"><div id="prog-bar" style="width:0;height:100%;background:var(--secondary);"></div></div>
+        <button id="up-btn" onclick="handleUpload()" style="background:white;color:black;border:none;padding:14px;border-radius:12px;width:100%;font-weight:800;cursor:pointer;">UPLOAD</button>
+        <p onclick="closeUpload()" style="color:#444;font-size:12px;margin-top:20px;cursor:pointer;">Cancel</p>
+    </div>
+</div>
+
+<div id="modal-meta" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Adjusting Record</h3>
+        <input type="text" id="post-title" placeholder="Custom Title">
+        <select id="post-category">
+            <option value="Other">Choose Sector...</option>
+            <option value="Gaming">Gaming</option>
+            <option value="Linux">Linux</option>
+            <option value="Coding">Coding</option>
+            <option value="Anime">Anime</option>
+            <option value="Music">Music</option>
+        </select>
+        <textarea id="post-details" placeholder="Custom Description..." rows="4"></textarea>
+        <button onclick="syncMetadata()" style="background:var(--primary);color:white;border:none;padding:14px;border-radius:12px;width:100%;font-weight:800;cursor:pointer;">COMMIT CHANGES</button>
     </div>
 </div>
 
 <div id="player-page">
+    <nav style="background:transparent;border:none;"><span onclick="closePlayer()" style="cursor:pointer;font-weight:800;padding:15px;display:inline-block;">← EXIT</span></nav>
     <div class="player-layout">
         <div>
-            <div style="padding: 20px 0;"><span onclick="closePlayer()" style="cursor:pointer; color:#888;">← Back</span></div>
             <div class="video-wrapper" id="p-target"></div>
-            <h2 id="p-title" style="margin-top:20px;"></h2>
-            <div style="background:#151515; padding:20px; border-radius:12px; font-size:13px; color:#bbb; border: 1px solid var(--border);">
-                <p>5.6 beta</p>
-                <p style="color:#666;">Thi video is being streamed from my gdrive so performance may varie (5.6 beta)</p>
+            <div class="p-desc">
+                <h1 id="p-title" style="margin:0; font-size:24px;"></h1>
+                <div id="p-view-count" style="font-size:12px; color:var(--text-dim); margin: 8px 0;"></div>
+                
+                <div class="p-channel-row">
+                    <div class="p-channel-left">
+                        <div id="p-chan-avatar" class="v-avatar" style="width:40px; height:40px;"></div>
+                        <div>
+                            <div id="p-chan-name" style="font-weight:700; font-size:16px;"></div>
+                            <div id="p-sub-count" style="font-size:12px; color:var(--text-dim);"></div>
+                        </div>
+                        <button class="sub-btn" id="main-sub-btn" onclick="toggleSub()">Subscribe</button>
+                    </div>
+                    <div class="p-actions">
+                        <div class="p-action-btn" onclick="addLike()">👍 <span id="p-like-count">0</span></div>
+                        <div class="p-action-btn">🔗 Share</div>
+                    </div>
+                </div>
+
+                <p id="p-desc-text" style="color:#aaa; font-size:14px; line-height:1.6; margin-top:20px; white-space: pre-wrap; padding:15px; background:rgba(255,255,255,0.03); border-radius:12px;"></p>
             </div>
         </div>
         <div id="next-list"></div>
@@ -77,92 +163,209 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyzZ3G1aYQeI957QTvpPOKMoZsHF5-ytJyNQWy02EVpe2MNl4daunHGpR15HQE06u4t/exec"; 
-    let globalVideos = [];
-    let user = localStorage.getItem('cem_user') || prompt("Channel Name:");
-    if(!user) user = "Zoro";
-    localStorage.setItem('cem_user', user);
-    document.getElementById('user-display').innerText = user;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRrmffdxz64Uq9ZvMpazc8ZGJLiNAu4LHtqMq_KFwcDkpsiBPxEhLBXgjDCX36bKfy/exec";
+    const ADMIN_USER = "Zoro";
+    let activeFileId = null;
+    let isRegisterMode = false;
+    let currentLikes = 0;
 
-    function logout() { localStorage.removeItem('cem_user'); location.reload(); }
-    function getCol(name) {
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-        const h = Math.abs(hash) % 360;
-        return { main: `hsl(${h}, 65%, 45%)`, grad: `linear-gradient(135deg, hsl(${h}, 70%, 40%) 0%, hsl(${(h+40)%360}, 60%, 20%) 100%)` };
+    function handleAuth() {
+        const u = document.getElementById('login-user').value.trim();
+        const p = document.getElementById('login-pass').value.trim();
+        if(!u || !p) return alert("Missing Data.");
+        if(!isRegisterMode) {
+            if(u === ADMIN_USER && p !== "cemboy") return alert("Admin Denied.");
+            if(u !== ADMIN_USER && p !== "hi") return alert("Access Denied.");
+        }
+        localStorage.setItem('cem_user', u);
+        location.reload(); 
     }
 
-    async function loadHome() {
-        const grid = document.getElementById('v-grid');
-        try {
+    function toggleRegister() {
+        isRegisterMode = !isRegisterMode;
+        document.getElementById('auth-title').innerText = isRegisterMode ? "Identity Sync" : "System Access";
+        document.getElementById('auth-btn').innerText = isRegisterMode ? "REGISTER" : "LOG IN";
+    }
+
+    const app = {
+        videos: [],
+        context: 'home',
+        activeCategory: 'All',
+        categories: ["All", "Gaming", "Linux", "Coding", "Anime", "Music", "Other"],
+        user: localStorage.getItem('cem_user'),
+
+        init() {
+            const shield = document.getElementById('auth-shield');
+            if(!this.user) { shield.style.display = 'flex'; } 
+            else {
+                shield.style.display = 'none';
+                document.getElementById('user-display').innerText = `@${this.user.toUpperCase()}`;
+                this.renderCategories();
+                this.fetchData();
+            }
+        },
+
+        async fetchData() {
             const res = await fetch(SCRIPT_URL);
-            globalVideos = (await res.json()).reverse(); 
-            grid.innerHTML = globalVideos.map(v => {
-                const colors = getCol(v.uploader);
-                return `<div class="card" onclick="play('${v.id}','${v.name}','${v.uploader}')">
-                    <div class="v-thumb-wrap" style="background: ${colors.grad}"><div class="v-thumb-letter">${v.name.charAt(0)}</div></div>
-                    <div style="display:flex; gap:12px; padding:12px;">
-                        <div style="width:38px;height:38px;border-radius:50%;background:${colors.main};display:flex;align-items:center;justify-content:center;font-weight:bold;">${v.uploader.charAt(0)}</div>
-                        <div><div style="font-weight:bold;">${v.name}</div><div style="font-size:12px; color:#888;">${v.uploader}</div></div>
+            this.videos = await res.json();
+            this.render();
+        },
+
+        renderCategories() {
+            document.getElementById('category-bar').innerHTML = this.categories.map(c => `<div class="chip ${this.activeCategory === c ? 'active' : ''}" onclick="app.setCategory('${c}')">${c}</div>`).join('');
+        },
+
+        setCategory(c) { this.activeCategory = c; this.renderCategories(); this.render(); },
+        setContext(ctx, el) { 
+            this.context = ctx; 
+            document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active'); this.render(); 
+        },
+
+        isImg(v) {
+           return v.fileType === 'image' || (v.name && /\.(jpg|jpeg|png|webp|gif)$/i.test(v.name));
+        },
+
+        render() {
+            let list = this.videos.filter(v => this.context === 'imageboard' ? this.isImg(v) : !this.isImg(v));
+            if(this.activeCategory !== 'All') list = list.filter(v => v.category === this.activeCategory);
+            if(this.context === 'myclips') list = list.filter(v => v.uploader === this.user);
+            if(this.context === 'favorites') list = list.filter(v => JSON.parse(localStorage.getItem('cem_liked') || '[]').includes(v.id));
+
+            document.getElementById('v-grid').innerHTML = list.map(v => {
+                const col = this.getCol(v.uploader);
+                const canEdit = this.user === ADMIN_USER || v.uploader === this.user;
+                return `
+                <div class="card">
+                    <div class="dots-btn" onclick="toggleMenu(event, '${v.id}')">⋮</div>
+                    <div id="menu-${v.id}" class="dropdown">
+                        <div onclick="toggleLike('${v.id}')">❤️ Like</div>
+                        ${canEdit ? `<div onclick="editMetadata('${v.id}','${v.name}','${v.category}','${v.details}')">📝 Edit Details</div>` : ''}
+                        ${(this.user === ADMIN_USER || v.uploader === this.user) ? `<div onclick="deleteVideo('${v.id}')" style="color:#ff4444;">🗑️ Delete</div>` : ''}
+                    </div>
+                    <div class="v-thumb-wrap" onclick="play('${v.id}','${v.name}','${v.uploader}','${v.category}','${v.details}','${v.fileType}')" style="background:${col.grad}">
+                        ${this.isImg(v) ? `<img src="https://drive.google.com/thumbnail?id=${v.id}&sz=w1000" class="v-img-prev">` : `<div class="v-letter">${v.name[0]}</div>`}
+                    </div>
+                    <div class="v-info">
+                        <div class="v-avatar" style="background:${col.main}; color:black;">${v.uploader[0]}</div>
+                        <div style="flex:1; overflow:hidden;">
+                            <div class="v-title">${v.name}</div>
+                            <div class="v-meta">${v.uploader} • ${v.category}</div>
+                        </div>
                     </div>
                 </div>`;
             }).join('');
-        } catch(e) { grid.innerHTML = "Error Loading Feed."; }
+        },
+
+        getCol(n) {
+            let hash = 0; for (let i = 0; i < n.length; i++) hash = n.charCodeAt(i) + ((hash << 5) - hash);
+            const h = Math.abs(hash) % 360;
+            return { main: `hsl(${h}, 70%, 60%)`, grad: `linear-gradient(135deg, hsl(${h}, 80%, 20%) 0%, #000 100%)` };
+        },
+
+        logout() { localStorage.removeItem('cem_user'); location.reload(); }
+    };
+
+    function toggleMenu(e, id) { e.stopPropagation(); closeAllMenus(); document.getElementById(`menu-${id}`).style.display = 'block'; }
+    function closeAllMenus() { document.querySelectorAll('.dropdown').forEach(d => d.style.display = 'none'); }
+    function toggleLike(id) { let liked = JSON.parse(localStorage.getItem('cem_liked') || '[]'); if(liked.includes(id)) liked = liked.filter(x => x !== id); else liked.push(id); localStorage.setItem('cem_liked', JSON.stringify(liked)); app.render(); }
+    
+    function editMetadata(id, name, cat, details) {
+        activeFileId = id;
+        document.getElementById('post-title').value = name;
+        document.getElementById('post-category').value = cat || 'Other';
+        document.getElementById('post-details').value = details || '';
+        document.getElementById('modal-meta').style.display = 'flex';
+    }
+
+    function syncMetadata() {
+        const title = document.getElementById('post-title').value;
+        const cat = document.getElementById('post-category').value;
+        const det = document.getElementById('post-details').value;
+        const params = new URLSearchParams({ action: "updateMeta", fileId: activeFileId, username: app.user, newName: title, category: cat, details: det });
+        fetch(SCRIPT_URL, { method: "POST", body: params }).then(() => location.reload());
     }
 
     function handleUpload() {
         const file = document.getElementById('vid-input').files[0];
-        if(!file) return alert("Select file!");
-
+        if(!file) return;
         const btn = document.getElementById('up-btn');
+        btn.disabled = true; document.getElementById('prog-bg').style.display = 'block';
         const bar = document.getElementById('prog-bar');
-        const bg = document.getElementById('prog-bg');
-        const status = document.getElementById('status-feed');
-        
-        btn.disabled = true;
-        bg.style.display = 'block';
-        bar.style.width = "20%";
-        status.innerText = "Step 1/2: Converting to string...";
-
+        let p = 0; const interval = setInterval(() => { if(p < 90) p += 5; bar.style.width = p + "%"; }, 200);
         const reader = new FileReader();
         reader.onload = function() {
-            bar.style.width = "50%";
-            status.innerText = "Step 2/2: Sending data to Google Drive...";
-            
-            const formData = new URLSearchParams({
-                videoData: reader.result.split(',')[1],
-                videoMime: file.type,
-                videoName: file.name,
-                username: user
-            });
-
-            fetch(SCRIPT_URL, { method: "POST", body: formData })
-            .then(res => res.text())
-            .then(() => {
-                bar.style.width = "100%";
-                status.innerText = "Success! Reloading...";
-                setTimeout(() => location.reload(), 1000);
-            })
-            .catch(() => {
-                alert("Failed. Check terminal or Apps Script logs.");
-                btn.disabled = false;
-                bg.style.display = 'none';
+            const formData = new URLSearchParams({ videoData: reader.result.split(',')[1], videoMime: file.type, videoName: file.name, username: app.user });
+            fetch(SCRIPT_URL, { method: "POST", body: formData }).then(res => res.text()).then(id => {
+                clearInterval(interval); bar.style.width = "100%"; activeFileId = id;
+                setTimeout(() => { document.getElementById('modal-upload').style.display = 'none'; document.getElementById('modal-meta').style.display = 'flex'; document.getElementById('post-title').value = file.name.split('.')[0]; }, 500);
             });
         };
         reader.readAsDataURL(file);
     }
 
-    function play(id, title, uploader) {
+    function play(id, title, uploader, cat, details, type) {
         document.getElementById('player-page').style.display = 'block';
         document.getElementById('p-title').innerText = title;
-        document.getElementById('p-target').innerHTML = `<iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay" allowfullscreen></iframe>`;
+        document.getElementById('p-chan-name').innerText = uploader;
+        document.getElementById('p-desc-text').innerText = details || "No description provided.";
+        
+        // Random Aesthetic Stats
+        document.getElementById('p-view-count').innerText = Math.floor(Math.random() * 5000 + 100) + " views • drive_node_1";
+        document.getElementById('p-sub-count').innerText = Math.floor(Math.random() * 29 + 1) + " subscribers";
+        currentLikes = Math.floor(Math.random() * 29 + 1);
+        document.getElementById('p-like-count').innerText = currentLikes;
+
+        const col = app.getCol(uploader);
+        const av = document.getElementById('p-chan-avatar');
+        av.style.background = col.main;
+        av.innerText = uploader[0];
+
+        const target = document.getElementById('p-target');
+        const isImgF = type === 'image' || /\.(jpg|jpeg|png|webp|gif)$/i.test(title);
+        
+        if(isImgF) {
+            target.innerHTML = `<img src="https://drive.google.com/thumbnail?id=${id}&sz=w1920" class="large-img">`;
+        } else {
+            target.innerHTML = `<iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay; fullscreen"></iframe>`;
+        }
+        
+        const next = app.videos.filter(v => v.id !== id).slice(0, 10);
+        document.getElementById('next-list').innerHTML = `<h3 style="margin:0 0 20px 0; font-size:16px;">Recommendations</h3>` + next.map(v => `
+            <div style="display:flex;gap:15px;margin-bottom:18px;cursor:pointer;" onclick="play('${v.id}','${v.name}','${v.uploader}','${v.category}','${v.details}','${v.fileType}')">
+                <div style="width:120px;aspect-ratio:16/9;background:#050505;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:10px;border:1px solid var(--border); overflow:hidden; position:relative;">
+                    ${app.isImg(v) ? `<img src="https://drive.google.com/thumbnail?id=${v.id}&sz=w400" style="width:100%;height:100%;object-fit:cover;">` : `<span style="opacity:0.2">${v.name[0]}</span>`}
+                </div>
+                <div style="flex:1; overflow:hidden;">
+                    <div style="font-size:12px;font-weight:700; color:#eee; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height:1.3;">${v.name}</div>
+                    <div style="font-size:10px;color:var(--text-dim); margin-top:5px;">${v.uploader}</div>
+                </div>
+            </div>`).join('');
         document.body.style.overflow = "hidden";
     }
 
+    function addLike() {
+        currentLikes++;
+        document.getElementById('p-like-count').innerText = currentLikes;
+    }
+
+    function toggleSub() {
+        const btn = document.getElementById('main-sub-btn');
+        if(btn.innerText === "Subscribe") {
+            btn.innerText = "Subscribed";
+            btn.style.background = "rgba(255,255,255,0.1)";
+            btn.style.color = "#fff";
+        } else {
+            btn.innerText = "Subscribe";
+            btn.style.background = "#fff";
+            btn.style.color = "#000";
+        }
+    }
+
     function closePlayer() { document.getElementById('player-page').style.display = 'none'; document.getElementById('p-target').innerHTML = ""; document.body.style.overflow = "auto"; }
-    function openModal() { document.getElementById('modal').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modal').style.display = 'none'; }
-    loadHome();
+    function openUpload() { document.getElementById('modal-upload').style.display = 'flex'; }
+    function closeUpload() { document.getElementById('modal-upload').style.display = 'none'; }
+    app.init();
 </script>
 </body>
 </html>
