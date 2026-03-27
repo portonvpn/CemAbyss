@@ -371,6 +371,22 @@
             </div>
         </div>
     </div>
+    <!-- Frutiger Variant Modal -->
+    <div class="modal-bg" id="modal-frutiger" style="display:none; align-items:center; justify-content:center; position:fixed; inset:0; z-index:9999; backdrop-filter:blur(30px) saturate(200%); -webkit-backdrop-filter:blur(30px) saturate(200%); background:rgba(0,0,0,0.6);" onclick="this.style.display='none'">
+        <div class="modal-box" style="width:900px; max-width:90%; position:relative; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.4); text-align:center; padding:40px; border-radius:30px; box-shadow:0 0 80px rgba(0, 168, 255, 0.3);" onclick="event.stopPropagation()">
+            <h2 style="margin-top:0; color:#fff; text-shadow:0 0 15px rgba(255,255,255,0.8); font-size:42px; margin-bottom:5px;">Frutiger Aero Hub</h2>
+            <p style="color:#ddd; margin-bottom:40px; font-size:18px;">Select your liquid glass variant to apply instantly.</p>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:25px;">
+                <div class="card" style="cursor:pointer; height:150px; background:url('frutiger.jpg') center/cover; border:2px solid #00a8ff; display:flex; align-items:flex-end; padding:15px; font-weight:800; font-size:20px; text-shadow:0 0 10px #000; color:#fff;" onclick="setFrutigerBg('frutiger.jpg'); document.getElementById('modal-frutiger').style.display='none'">Variant 1</div>
+                <div class="card" style="cursor:pointer; height:150px; background:url('frutiger_2.jpg') center/cover; border:2px solid #00a8ff; display:flex; align-items:flex-end; padding:15px; font-weight:800; font-size:20px; text-shadow:0 0 10px #000; color:#fff;" onclick="setFrutigerBg('frutiger_2.jpg'); document.getElementById('modal-frutiger').style.display='none'">Variant 2</div>
+                <div class="card" style="cursor:pointer; height:150px; background:url('frutiger_3.jpg') center/cover; border:2px solid #00a8ff; display:flex; align-items:flex-end; padding:15px; font-weight:800; font-size:20px; text-shadow:0 0 10px #000; color:#fff;" onclick="setFrutigerBg('frutiger_3.jpg'); document.getElementById('modal-frutiger').style.display='none'">Variant 3</div>
+                <div class="card" style="cursor:pointer; height:150px; background:url('frutiger_4.jpg') center/cover; border:2px solid #00a8ff; display:flex; align-items:flex-end; padding:15px; font-weight:800; font-size:20px; text-shadow:0 0 10px #000; color:#fff;" onclick="setFrutigerBg('frutiger_4.jpg'); document.getElementById('modal-frutiger').style.display='none'">Variant 4</div>
+                <div class="card" style="cursor:pointer; height:150px; background:url('frutiger_5.jpg') center/cover; border:2px solid #00a8ff; display:flex; align-items:flex-end; padding:15px; font-weight:800; font-size:20px; text-shadow:0 0 10px #000; color:#fff;" onclick="setFrutigerBg('frutiger_5.jpg'); document.getElementById('modal-frutiger').style.display='none'">Variant 5</div>
+            </div>
+            <button class="primary-btn" style="margin-top:40px; background:#e11d48; border-color:#e11d48; width:auto; padding:12px 40px; font-size:16px;" onclick="document.getElementById('modal-frutiger').style.display='none'">Close Hub</button>
+        </div>
+    </div>
+    
     <div id="modal-upload" class="modal-overlay">
         <div class="modal-box" onclick="event.stopPropagation()">
             <h3>Upload</h3>

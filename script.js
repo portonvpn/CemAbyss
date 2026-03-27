@@ -1062,7 +1062,7 @@ async function buyTheme(tid, price) {
     const t = MARKET_THEMES.find(theme => theme.id === tid);
     if (!t) return alert("Theme not found.");
 
-    const { error } = await supabaseClient.from('profiles').update({ coins: currentCoins - t.price, unlocked_themes: existingThemes }).eq('username', currentUser);
+    const { error } = await supabaseClient.from('profiles').update({ coins: coins - t.price, unlocked_themes: existingThemes }).eq('username', currentUser);
 
     if (!error) {
         logAudit('PURCHASE_THEME', currentUser, `Bought ${t.id} for ${t.price} coins`);
@@ -1095,7 +1095,11 @@ function renderSettings() {
 
     MARKET_THEMES.forEach(t => {
         if (myThemes.includes(t.id) || DEV_USERS.includes(currentUser)) {
-            html += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold; color:${t.id === 'frutiger' || t.id === 'creamy' ? '#000' : '#fff'}" onclick="setTheme('${t.id}')">★ ${t.name}</div>`;
+            if (t.id === 'frutiger') {
+                html += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold; color:#000" onclick="setTheme('${t.id}'); document.getElementById('modal-frutiger').style.display='flex'">★ ${t.name}</div>`;
+            } else {
+                html += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold; color:${t.id === 'creamy' ? '#000' : '#fff'}" onclick="setTheme('${t.id}')">★ ${t.name}</div>`;
+            }
         }
     });
 
