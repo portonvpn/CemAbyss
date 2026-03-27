@@ -5,130 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CemAbyss | Zoro(dev)</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #a855f7; --bg: #000000; --card: #0a0a0a; --nav: rgba(5, 5, 5, 0.95); --border: rgba(255, 255, 255, 0.08); --text: #ffffff; --text-dim: #94a3b8; }
-        [data-theme="midnight-red"] { --primary: #e11d48; --bg: #0a0000; --card: #140000; --nav: rgba(10, 0, 0, 0.95); --border: rgba(225, 29, 72, 0.2); }
-        [data-theme="ocean"] { --primary: #0ea5e9; --bg: #00050f; --card: #000a1a; --nav: rgba(0, 5, 15, 0.95); --border: rgba(14, 165, 233, 0.2); }
-        [data-theme="forest"] { --primary: #10b981; --bg: #000a05; --card: #00140a; --nav: rgba(0, 10, 5, 0.95); --border: rgba(16, 185, 129, 0.2); }
-        [data-theme="eclipse"] { --primary: #f59e0b; --bg: #0a0500; --card: #140a00; --nav: rgba(10, 5, 0, 0.95); --border: rgba(245, 158, 11, 0.2); }
-        [data-theme="abyss"] { --primary: #6366f1; --bg: #05050a; --card: #0a0a14; --nav: rgba(5, 5, 10, 0.95); --border: rgba(99, 102, 241, 0.2); }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        ::-webkit-scrollbar { width: 0px; }
-        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; transition: background 0.3s ease; }
-        #auth-shield { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
-        .auth-box { background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--border); width: 95%; max-width: 400px; text-align: center; }
-        nav { background: var(--nav); backdrop-filter: blur(20px); height: 64px; display: none; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; top: 0; width: 100%; z-index: 2000; border-bottom: 1px solid var(--border); transition: background 0.3s ease, border 0.3s ease; }
-        .logo { font-size: 20px; font-weight: 800; color: white; text-decoration: none; }
-        .logo span { color: var(--primary); }
-        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 5px; z-index: 2001; }
-        .hamburger div { width: 25px; height: 3px; background: white; border-radius: 5px; }
-        aside { width: 240px; height: 100vh; position: fixed; top: 64px; padding: 20px 16px; background: var(--bg); border-right: 1px solid var(--border); z-index: 1900; transition: transform 0.3s ease, background 0.3s ease, border 0.3s ease; }
-        .side-item { padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-dim); border-radius: 14px; margin-bottom: 4px; font-size: 14px; font-weight: 600; }
-        .side-item:hover, .side-item.active { background: rgba(255,255,255,0.05); color: white; }
-        .side-item.active { color: var(--primary); background: rgba(168, 85, 247, 0.1); }
-        main { margin-left: 240px; margin-top: 64px; padding: 24px; min-height: calc(100vh - 64px); }
-        .page-view { display: none; }
-        .page-view.active { display: block; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
-        .card { position: relative; width: 100%; z-index: 5; }
-        .v-thumb-wrap { width: 100%; aspect-ratio: 16/9; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #050505; cursor: pointer; position: relative; }
-        .v-img-prev { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; pointer-events: none; }
-        .dots-btn { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; cursor: pointer; border: 1px solid var(--border); }
-        .dropdown { display: none; position: absolute; top: 45px; right: 0; background: #111; border: 1px solid var(--border); border-radius: 12px; width: 150px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .dropdown div { padding: 12px; font-size: 13px; cursor: pointer; color: #ccc; }
-        #player-page { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 5000; overflow-y: auto; padding-top: 64px; }
-        .player-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; max-width: 1700px; margin: 0 auto; padding: 20px; }
-        .video-wrapper { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
-        video, img.p-media { width: 100%; height: 100%; object-fit: contain; }
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 8000; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .modal-box { background: var(--card); padding: 32px; border-radius: 24px; width: 90%; max-width: 480px; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
-        .prog-bg { width: 100%; height: 6px; background: #111; border-radius: 10px; margin: 20px 0; display: none; overflow: hidden; }
-        .prog-bar { width: 0%; height: 100%; background: var(--primary); transition: 0.3s; }
-        input[type="text"], input[type="password"], textarea { width: 100%; background: #111; border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: #fff; margin-bottom: 12px; font-family: inherit; }
-        input[type="file"] { width: 100%; background: #111; border: 1px solid var(--border); padding: 10px; border-radius: 12px; color: #fff; margin-bottom: 12px; font-family: inherit; }
-        button.primary-btn { width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; }
-        .v-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: black; cursor: pointer; overflow: hidden; }
-        .badge { background: var(--primary); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; color: white; margin-left: 4px; }
-        #comments-container { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
-        .comment-item { display: flex; gap: 12px; margin-bottom: 20px; position: relative; }
-        .comment-text { font-size: 14px; line-height: 1.4; color: var(--text); }
-        .comment-user { font-weight: 800; font-size: 13px; margin-bottom: 4px; cursor: pointer; display: flex; align-items: center; }
-        .comment-user:hover { color: var(--primary); }
-        .rec-card { display: flex; gap: 12px; cursor: pointer; margin-bottom: 12px; }
-        .rec-thumb { width: 140px; aspect-ratio: 16/9; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; }
-        .rec-info { overflow: hidden; }
-        .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 24px; max-width: 600px; }
-        .settings-card h3 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .theme-btn { padding: 15px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; font-weight: 800; color: white; text-align: center; }
-        .glow-text { color: var(--primary); text-shadow: 0 0 10px var(--primary); font-weight: 800; }
-        .dev-badge { background: linear-gradient(45deg, #a855f7, #ec4899); border-radius: 4px; padding: 2px 6px; font-size: 10px; color: white; font-weight: 800; margin-left: 6px; box-shadow: 0 0 5px rgba(236,72,153,0.5); display: inline-block; }
-        @media (max-width: 900px) { .hamburger { display: flex; } aside { transform: translateX(-100%); width: 280px; background: #050505; } aside.open { transform: translateX(0); } main { margin-left: 0; padding: 15px; } .grid { grid-template-columns: 1fr; } .player-layout { grid-template-columns: 1fr; } }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body onclick="closeAllMenus(); closeSidebar();">
+<body>
 <script>
     const savedTheme = localStorage.getItem('cem_theme');
     if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
 </script>
-<div id="auth-shield">
-    <div class="auth-box" onclick="event.stopPropagation()">
-        <h1>CEM<span>ABYSS</span></h1>
-        <input type="text" id="login-user" placeholder="Username">
-        <input type="password" id="login-pass" placeholder="Password">
-        
-        <div id="default-pass-notice" style="font-size:12px; color:var(--text-dim); margin-bottom:15px; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--border); text-align:left; display:flex; align-items:center; gap:8px;">
-            <span style="font-size:14px;">💡</span> 
-            <span>Existing accounts use the default password <b>hi</b></span>
-        </div>
+<div id="global-banner" style="display:none; position:fixed; bottom:20px; right:20px; z-index:10000; background:var(--primary); color:white; padding:15px; border-radius:12px; font-weight:800; box-shadow:0 5px 20px rgba(0,0,0,0.5); max-width:400px; gap:15px; align-items:center; border:1px solid rgba(255,255,255,0.2);">
+    <span id="banner-text-content" style="flex:1;"></span>
+    <button onclick="document.getElementById('global-banner').style.display='none'" style="background:rgba(0,0,0,0.3); border:none; color:white; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold;">X</button>
+</div>
+<div id="auth-shield" style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:none;align-items:center;justify-content:center;">
+    <div style="background:#111;padding:40px;border-radius:12px;border:1px solid var(--border);width:100%;max-width:400px;text-align:center;" id="auth-form-container">
+        <h2 style="margin-top:0" id="auth-title">Login</h2>
+        <input type="email" id="login-email" placeholder="Email Address" onkeypress="if(event.key==='Enter')handleAuth()">
+        <input type="text" id="login-user" placeholder="Choose Username" style="display:none;" onkeypress="if(event.key==='Enter')handleAuth()">
+        <input type="password" id="login-pass" placeholder="Password" onkeypress="if(event.key==='Enter')handleAuth()">
+        <button class="primary-btn" id="auth-btn" onclick="handleAuth()">Submit</button>
+        <p style="margin-top:15px;color:gray;font-size:12px;cursor:pointer;" onclick="showResetPassword()">Forgot Password?</p>
+        <p style="margin-top:5px;color:var(--primary);cursor:pointer;font-weight:800;" id="auth-toggle" onclick="toggleAuthMode()">No account? Register</p>
+    </div>
 
-        <button class="primary-btn" onclick="handleAuth()">Continue</button>
-        <p onclick="toggleAuthMode()" id="auth-toggle" style="color:var(--primary); cursor:pointer; font-weight:800; margin-top:20px;">No account? Register</p>
+    <div style="background:#111;padding:40px;border-radius:12px;border:1px solid var(--border);width:100%;max-width:400px;text-align:center;display:none;" id="reset-form-container">
+        <h2 style="margin-top:0">Reset Password</h2>
+        <p style="color:gray;font-size:12px;margin-bottom:15px;">Enter your email to receive a password reset link.</p>
+        <input type="email" id="reset-email" placeholder="Email Address">
+        <button class="primary-btn" onclick="sendResetEmail()">Send Link</button>
+        <p style="margin-top:15px;color:gray;cursor:pointer;font-size:12px;" onclick="hideResetPassword()">Back to Login</p>
     </div>
 </div>
 <nav id="nav-bar">
     <div style="display:flex; align-items:center; gap:15px;">
-        <div class="hamburger" onclick="event.stopPropagation(); toggleSidebar()"><div></div><div></div><div></div></div>
-        <a href="#" class="logo" onclick="location.reload()">CEM<span>ABYSS</span></a>
+        <div class="hamburger" onclick="toggleSidebar()"><div></div><div></div><div></div></div>
+        <a href="#" class="logo" onclick="setContext('home')">CEM<span>ABYSS</span></a>
     </div>
-    <div style="display:flex; align-items:center; gap:12px;">
-        <span id="u-name-display" style="font-size:12px; font-weight:800; display:flex; align-items:center;"></span>
-        <div id="nav-avatar" class="v-avatar" onclick="openProfile(currentUser)"></div>
+    <div style="display:flex; align-items:center; gap:15px;">
+        <div id="u-coins" class="coin-chip">🪙 0</div>
+        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="setContext('settings')">
+            <div id="u-name-display" style="font-weight:800; font-size:14px;"></div>
+            <div id="nav-avatar" class="v-avatar"></div>
+        </div>
         <button onclick="logout()" style="background:transparent; border:none; color:var(--text-dim); font-size:12px; font-weight:800; cursor:pointer;">Logout</button>
     </div>
 </nav>
-<aside id="side-bar" onclick="event.stopPropagation()">
+<aside id="side-bar">
     <div class="side-item active" onclick="setContext('home', this)">🏠 Home</div>
-    <div class="side-item" onclick="setContext('imageboard', this)">🖼️ Images</div>
     <div class="side-item" onclick="setContext('studio', this)">🎬 Studio</div>
+    <div class="side-item" onclick="setContext('announcements', this)">📢 Announcements</div>
+    <div class="side-item" onclick="setContext('imageboard', this)">🖼️ Imageboard</div>
+    <div class="side-item" onclick="setContext('marketplace', this)">🛍️ Marketplace</div>
     <div class="side-item" onclick="setContext('settings', this)">⚙️ Settings</div>
-    <div class="side-item" id="admin-nav-item" style="display:none; color:var(--primary);" onclick="setContext('admin', this)">🛡️ Admin Panel</div>
+    <div class="side-item" id="admin-nav-item" style="display:none; color:var(--primary)" onclick="setContext('admin', this)">🛡️ Admin</div>
     <div class="side-item" style="color:var(--primary); margin-top:10px;" onclick="openUpload()">📤 Upload</div>
 </aside>
 <main id="main-area" style="display:none;">
     <div id="view-home" class="page-view active"><div class="grid" id="v-grid"></div></div>
+    <div id="view-announcements" class="page-view">
+        <h2 style="margin-top:0; color:var(--primary);">System Announcements</h2>
+        <div id="announcement-grid" style="display:flex; flex-direction:column; gap:20px; max-width:800px;"></div>
+    </div>
     <div id="view-profile" class="page-view">
         <div id="profile-head" style="text-align:center; padding: 40px 0; border-bottom:1px solid var(--border)"></div>
         <div class="grid" id="profile-grid" style="margin-top:30px;"></div>
     </div>
+    <div id="view-marketplace" class="page-view">
+        <h2 style="margin-top:0; color:var(--primary);">Themes Marketplace</h2>
+        <p style="color:var(--text-dim); margin-top:-10px; margin-bottom:20px;">Use your daily login CemCoins to purchase exclusive animated and static themes!</p>
+        <div class="marketplace-grid" id="market-grid"></div>
+    </div>
+    
     <div id="view-settings" class="page-view">
         <h2 style="margin-top:0">Settings</h2>
         <div class="settings-card">
-            <h3>User Customization</h3>
-            <label style="display:block; margin-bottom:8px; font-size:14px; color:var(--text-dim)">Change Profile Picture</label>
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <h3>Profile Customization</h3>
+            <label style="color:var(--text-dim); font-size:12px;">Display Name</label>
+            <input type="text" id="set-name" placeholder="Change display name...">
+            <button class="primary-btn" id="btn-name" onclick="saveName()">Save Name</button>
+            <div style="margin-top:20px;">
+                <label style="color:var(--text-dim); font-size:12px;">Avatar Image</label>
                 <input type="file" id="set-pfp" accept="image/*" style="margin-bottom:0; padding:10px;">
-                <button class="primary-btn" id="btn-pfp" style="width:auto; padding:0 20px;" onclick="savePfp()">Upload</button>
-            </div>
-            <label style="display:block; margin-bottom:8px; font-size:14px; color:var(--text-dim)">Change Name</label>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="set-name" placeholder="New Display Name" style="margin-bottom:0">
-                <button class="primary-btn" id="btn-name" style="width:auto; padding:0 20px;" onclick="saveName()">Save</button>
+                <button class="primary-btn" id="btn-pfp" onclick="savePfp()">Upload Avatar</button>
             </div>
         </div>
         <div class="settings-card">
-            <h3>Themes</h3>
-            <div class="theme-grid">
+            <h3>Your Unlocked Themes</h3>
+            <div class="theme-grid" id="my-themes-grid">
                 <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default Purple</div>
                 <div class="theme-btn" style="background:#e11d48" onclick="setTheme('midnight-red')">Midnight Red</div>
                 <div class="theme-btn" style="background:#0ea5e9" onclick="setTheme('ocean')">Ocean Blue</div>
@@ -139,10 +101,115 @@
         </div>
     </div>
     <div id="view-admin" class="page-view">
-        <h2 style="margin-top:0">Admin Control Panel</h2>
+        <h2 style="margin-top:0; color:var(--primary); text-shadow:0 0 10px var(--primary);">Security & Admin Control Panel</h2>
+        
+        <div class="settings-card" style="max-width:800px; border-color:var(--primary);">
+            <h3 style="color:var(--primary);">Global Broadcast Banner</h3>
+            <p style="font-size:12px; color:gray; margin-top:-15px;">Drops a massive banner at the bottom corner for all users instantly.</p>
+            <textarea id="admin-banner-text" placeholder="Type an emergency global announcement here... Leave blank to remove." style="min-height:50px; background:#050505;"></textarea>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <label style="font-size:12px; color:gray">Banner Color:</label>
+                <input type="color" id="admin-banner-color" value="#e11d48" style="height:48px; width:60px; padding:0; background:transparent; border:none; cursor:pointer;">
+                <button class="primary-btn" style="width:auto; padding:0 30px; font-weight:900; background:var(--primary);" onclick="saveBanner()">BROADCAST</button>
+            </div>
+        </div>
+
+        <div class="settings-card" style="max-width:800px; border-color:var(--text);">
+            <h3>Post System Announcement</h3>
+            <p style="font-size:12px; color:gray; margin-top:-15px;">Posts a persistent announcement to the Announcements tab.</p>
+            <input type="text" id="admin-ann-title" placeholder="Announcement Title...">
+            <textarea id="admin-ann-body" placeholder="Message content detailing the updates..." style="min-height:80px;"></textarea>
+            <div style="display:flex; gap:10px; align-items:center;">
+               <label style="font-size:12px; color:gray">Glow/Accent Color:</label>
+               <input type="color" id="admin-ann-color" value="#a855f7" style="height:48px; width:60px; padding:0; background:transparent; border:none; cursor:pointer;">
+               <button class="primary-btn" onclick="postAnnouncement()">POST ANNOUNCEMENT</button>
+            </div>
+        </div>
+        
         <div class="settings-card" style="max-width:800px;">
-            <h3>User Management</h3>
-            <div id="admin-users-list"></div>
+            <h3>User Management & Moderation</h3>
+            <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                <input type="text" id="admin-user-search" placeholder="Search exact Username..." style="margin-bottom:0">
+                <button class="primary-btn" style="width:auto; padding:0 20px" onclick="searchAdminUser()">Search</button>
+            </div>
+            <div id="admin-search-result"><p style="color:gray; font-size:14px;">Enter a username to manage</p></div>
+        </div>
+        <div class="settings-card" style="max-width:800px;">
+            <h3>Rank Management</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;" id="admin-ranks-list"></div>
+            <div style="background:rgba(255,255,255,0.02); padding:20px; border-radius:12px; border:1px solid var(--border)">
+                <h4 style="margin-top:0">Create / Edit Rank</h4>
+                <div class="grid" style="grid-template-columns:1fr 1fr; gap:15px;" oninput="updateLivePreview()" onchange="updateLivePreview()">
+                    <div><label style="font-size:12px; color:gray">Rank ID (no spaces)</label><input type="text" id="r-id" placeholder="e.g. papa"></div>
+                    <div><label style="font-size:12px; color:gray">Badge Text</label><input type="text" id="r-badge-text" placeholder="e.g. PAPA"></div>
+                    
+                    <div style="grid-column: span 2"><h4 style="margin:5px 0 0 0; border-bottom:1px solid var(--border); padding-bottom:5px;">Username Styling</h4></div>
+                    
+                    <div>
+                        <label style="font-size:12px; color:gray">Color Type</label>
+                        <select id="r-name-type" onchange="toggleNameColorInputs()" style="width:100%; background:#111; color:white; border:1px solid var(--border); padding:10px; border-radius:8px; margin-bottom:12px;">
+                            <option value="solid">Solid Color</option>
+                            <option value="gradient">Gradient</option>
+                        </select>
+                    </div>
+                    <div id="name-color-inputs" style="display:flex; gap:10px; align-items:center;">
+                        <input type="color" id="r-name-c1" value="#ffffff" style="height:40px; width:100%; padding:0; background:transparent; border:none; cursor:pointer;">
+                        <span id="name-c2-wrap" style="display:none; width:100%; align-items:center; gap:10px;">
+                           <span style="font-size:12px; color:gray">to</span>
+                           <input type="color" id="r-name-c2" value="#a855f7" style="height:40px; width:100%; padding:0; background:transparent; border:none; cursor:pointer;">
+                        </span>
+                    </div>
+                    
+                    <div><label style="font-size:12px; color:gray">Username Glow Color</label><input type="color" id="r-name-glow-c" value="#000000" style="height:40px; width:100%; padding:0; background:transparent; border:none; cursor:pointer;"></div>
+                    <div><label style="font-size:12px; color:gray">Username Glow Intensity (px)</label><input type="number" id="r-name-glow-size" value="0"></div>
+                    <div style="display:flex; align-items:flex-end; padding-bottom:15px; grid-column: span 2;"><label style="font-size:14px; cursor:pointer;"><input type="checkbox" id="r-name-moving"> Moving Gradient Effect?</label></div>
+                    
+                    <div style="grid-column: span 2"><h4 style="margin:5px 0 0 0; border-bottom:1px solid var(--border); padding-bottom:5px;">Badge Styling</h4></div>
+                    
+                    <div>
+                        <label style="font-size:12px; color:gray">Background Type</label>
+                        <select id="r-badge-type" onchange="toggleBadgeColorInputs()" style="width:100%; background:#111; color:white; border:1px solid var(--border); padding:10px; border-radius:8px; margin-bottom:12px;">
+                            <option value="transparent">Transparent</option>
+                            <option value="solid">Solid Color</option>
+                            <option value="gradient">Gradient</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <div id="badge-color-inputs" style="display:none; width:100%;">
+                            <input type="color" id="r-badge-c1" value="#a855f7" style="height:40px; width:100%; padding:0; background:transparent; border:none; cursor:pointer;">
+                        </div>
+                        <span id="badge-c2-wrap" style="display:none; width:100%; align-items:center; gap:10px;">
+                           <span style="font-size:12px; color:gray">to</span>
+                           <input type="color" id="r-badge-c2" value="#ec4899" style="height:40px; width:100%; padding:0; background:transparent; border:none; cursor:pointer;">
+                        </span>
+                    </div>
+                    
+                    <div><label style="font-size:12px; color:gray">Badge Text Color</label><input type="color" id="r-badge-text-col" value="#ffffff" style="height:40px; width:100%; padding:0; background:transparent; border:none; cursor:pointer;"></div>
+                    <div><label style="font-size:12px; color:gray">Badge Border Radius (px)</label><input type="number" id="r-badge-root-rad" value="4"></div>
+                    <div><label style="font-size:12px; color:gray">Badge Glow Color</label><input type="color" id="r-badge-glow-c" value="#000000" style="height:40px; width:100%; padding:0; background:transparent; border:none; cursor:pointer;"></div>
+                    <div><label style="font-size:12px; color:gray">Badge Glow Size (px)</label><input type="number" id="r-badge-glow-size" value="0"></div>
+
+                    <div style="grid-column: span 2; margin-top:10px;">
+                        <label style="font-size:12px; color:gray">Live Preview</label>
+                        <div id="live-rank-preview" style="background:#050505; border:1px solid var(--border); padding:15px; border-radius:8px; display:flex; align-items:center; font-size:16px; margin-top:5px; justify-content:center;">
+                            <span id="prev-name" style="font-weight:800;">Username</span>
+                            <span id="prev-badge" style="padding:2px 6px; font-size:10px; font-weight:800; margin-left:6px; display:inline-block;">BADGE</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button class="primary-btn" onclick="saveRank()">Save Rank</button>
+                    <button class="primary-btn" style="background:var(--border);" onclick="clearRankForm()">Clear</button>
+                    <button class="primary-btn" style="background:#e11d48; display:none;" id="r-delete-btn" onclick="deleteRank()">Delete</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-card" style="max-width:1000px; border-color:#00ff00;">
+            <h3 style="color:#00ff00; margin-bottom:10px;">Audit & Moderation Log</h3>
+            <p style="font-size:12px; color:gray; margin-top:-5px; margin-bottom:15px;">Live track of all admin actions taken across the platform.</p>
+            <div id="admin-audit-log" class="audit-log">Loading secure logs...</div>
+            <button class="primary-btn" style="width:auto; padding:8px 16px; background:#222; font-size:12px;" onclick="fetchData()">Refresh Logs</button>
         </div>
     </div>
 </main>
@@ -213,299 +280,6 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    const CLOUD_NAME='dncftuhoo', UPLOAD_PRESET='cemabyss', SUPABASE_URL='https://xqvvwejwkmqdmsorqdzp.supabase.co', SUPABASE_KEY='sb_publishable_WLR6XzQijI3h1-oWa6T-mg_FeolGe9z';
-    const DEV_USERS = ["Zoro", "Redtree1222"];
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let currentUser=localStorage.getItem('cem_user'), allVideos=[], allProfiles=[], currentCtx='home', authMode='login', activeVideo=null, editingId=null;
-    
-    function toggleSidebar(){document.getElementById('side-bar').classList.toggle('open');}
-    function closeSidebar(){document.getElementById('side-bar').classList.remove('open');}
-    function logout(){localStorage.removeItem('cem_user'); location.reload(); }
-    
-    function toggleAuthMode(){
-        authMode=authMode==='login'?'register':'login'; 
-        document.getElementById('auth-toggle').innerText=authMode==='login'?'No account? Register':'Have an account? Login';
-        document.getElementById('default-pass-notice').style.display=authMode==='login'?'flex':'none';
-    }
-
-    function getCol(n){let h=0; if(n){for(let i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h);} return `hsl(${Math.abs(h)%360}, 70%, 60%)`;}
-    function getAvatarStyle(u){const p=allProfiles.find(x=>x.username===u); if(p&&p.avatar_url)return `background:url('${p.avatar_url}') center/cover;color:transparent;`; return `background:${getCol(u)};`;}
-    
-    function formatName(u) {
-        const p = allProfiles.find(x=>x.username===u);
-        const dName = (p&&p.display_name)?p.display_name:u;
-        const isDev = DEV_USERS.includes(u);
-        const glow = isDev ? 'glow-text' : '';
-        const badge = isDev ? `<span class="dev-badge">DEV</span>` : (p?.is_verified ? `<span class="badge">✓</span>` : '');
-        return `<span class="${glow}">${dName}</span> ${badge}`;
-    }
-
-    async function handleAuth(){
-        const u=document.getElementById('login-user').value.trim(), p=document.getElementById('login-pass').value.trim();
-        const {data:profile}=await supabaseClient.from('profiles').select('*').eq('username',u).maybeSingle();
-        if(authMode==='login'){
-            if(profile && profile.is_banned) return alert("You are permanently banned.");
-            if(DEV_USERS.includes(u) && p==="cem") return loginSuccess(u);
-            if(profile && (profile.pass===p || p==="hi")) return loginSuccess(u);
-            alert("Fail");
-        } else {
-            if(profile) return alert("Taken");
-            await supabaseClient.from('profiles').insert([{username:u, pass:p, subscribers:0, is_banned:false}]);
-            loginSuccess(u);
-        }
-    }
-    
-    function loginSuccess(u){localStorage.setItem('cem_user',u); location.reload();}
-    
-    async function fetchData(){
-        const {data:v}=await supabaseClient.from('videos').select('*').order('id',{ascending:false});
-        const {data:p}=await supabaseClient.from('profiles').select('*');
-        allVideos=v||[]; allProfiles=p||[]; 
-        if(currentCtx==='admin') renderAdmin(); else render(); 
-        updateNav();
-    }
-    
-    function updateNav(){
-        document.getElementById('u-name-display').innerHTML = formatName(currentUser);
-        const av = document.getElementById('nav-avatar'); av.setAttribute('style', getAvatarStyle(currentUser)); av.innerText = currentUser?currentUser[0].toUpperCase():'?';
-    }
-    
-    function setContext(ctx, el){
-        currentCtx=ctx; document.querySelectorAll('.side-item').forEach(i=>i.classList.remove('active'));
-        if(el) el.classList.add('active'); closeSidebar();
-        document.querySelectorAll('.page-view').forEach(p=>p.classList.remove('active'));
-        if(ctx==='settings'){
-            document.getElementById('view-settings').classList.add('active');
-        } else if(ctx==='admin'){
-            document.getElementById('view-admin').classList.add('active'); renderAdmin();
-        } else {
-            document.getElementById('view-home').classList.add('active'); render();
-        }
-    }
-    
-    function render(target='v-grid', list=null){
-        const grid=document.getElementById(target); let d=list||allVideos;
-        if(currentCtx==='imageboard') d=d.filter(v=>v.url.match(/\.(jpg|jpeg|png|webp|gif)$/i));
-        else if(currentCtx==='home') d=d.filter(v=>v.url && !v.url.match(/\.(jpg|jpeg|png|webp|gif)$/i));
-        else if(currentCtx==='studio') d=d.filter(v=>v.uploader===currentUser);
-        
-        const cP = allProfiles.find(x=>x.username===currentUser);
-        
-        grid.innerHTML = d.map(v=>{
-            const isOwner = v.uploader===currentUser;
-            const canEdit = DEV_USERS.includes(currentUser) || (isOwner && cP?.is_verified);
-            
-            return `<div class="card">
-                <div class="dots-btn" onclick="event.stopPropagation(); toggleMenu(event,'${v.id}')">⋮</div>
-                <div id="menu-${v.id}" class="dropdown">
-                    <div onclick="openProfile('${v.uploader}')">👤 Channel</div>
-                    ${canEdit ? `<div onclick="openEdit('${v.id}','${v.title}','${encodeURIComponent(v.details||'')}')">📝 Edit</div><div onclick="deleteVideo('${v.id}')" style="color:red">🗑️ Delete</div>` : ''}
-                </div>
-                <div class="v-thumb-wrap" onclick="playVideo('${v.id}')"><img src="${v.thumb}" class="v-img-prev"></div>
-                <div style="display:flex; gap:12px; padding:12px 0;">
-                    <div class="v-avatar" style="${getAvatarStyle(v.uploader)}" onclick="event.stopPropagation(); openProfile('${v.uploader}')">${v.uploader?v.uploader[0]:'?'}</div>
-                    <div><div style="font-weight:700;">${v.title}</div><div style="font-size:12px;color:gray;display:flex;align-items:center;">${formatName(v.uploader)}</div></div>
-                </div>
-            </div>`;
-        }).join('');
-    }
-    
-    function renderAdmin(){
-        if(!DEV_USERS.includes(currentUser)) return;
-        document.getElementById('admin-users-list').innerHTML = allProfiles.map(p => `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:12px; border-radius:12px; margin-bottom:10px; border:1px solid var(--border); flex-wrap:wrap; gap:10px;">
-                <div style="font-weight:800; display:flex; align-items:center; gap:8px;">
-                    <div class="v-avatar" style="width:24px; height:24px; font-size:10px; ${getAvatarStyle(p.username)}">${p.username[0]}</div>
-                    ${formatName(p.username)} ${p.is_banned?'<span style="color:#e11d48; font-size:10px; background:rgba(225,29,72,0.1); padding:2px 6px; border-radius:4px; margin-left:6px;">BANNED</span>':''}
-                </div>
-                <div style="display:flex; gap:8px;">
-                    <button style="padding:6px 12px; background:#222; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="toggleVerify('${p.username}', ${!p.is_verified})">${p.is_verified?'Unverify':'Verify'}</button>
-                    <button style="padding:6px 12px; background:#222; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="toggleBan('${p.username}', ${!p.is_banned})">${p.is_banned?'Unban':'Ban'}</button>
-                    <button style="padding:6px 12px; background:#e11d48; color:white; border:none; border-radius:6px; cursor:pointer;" onclick="deleteAccount('${p.username}')">Delete</button>
-                </div>
-            </div>
-        `).join('');
-    }
-    
-    async function toggleVerify(u, s){ await supabaseClient.from('profiles').update({is_verified:s}).eq('username',u); fetchData(); }
-    async function toggleBan(u, s){ await supabaseClient.from('profiles').update({is_banned:s}).eq('username',u); fetchData(); }
-    async function deleteAccount(u){ if(confirm("Nuke this user and ALL their videos?")){ await supabaseClient.from('videos').delete().eq('uploader',u); await supabaseClient.from('profiles').delete().eq('username',u); fetchData(); } }
-    
-    async function playVideo(id){
-        activeVideo=allVideos.find(v=>v.id == id); document.getElementById('player-page').style.display='block';
-        const p = allProfiles.find(x=>x.username===activeVideo.uploader);
-        document.getElementById('p-title').innerText=activeVideo.title;
-        document.getElementById('p-uploader').innerHTML=formatName(activeVideo.uploader);
-        document.getElementById('p-uploader').onclick=()=>openProfile(activeVideo.uploader);
-        document.getElementById('p-avatar').setAttribute('style', `width:40px; height:40px; ${getAvatarStyle(activeVideo.uploader)}`);
-        document.getElementById('p-avatar').innerText=activeVideo.uploader[0];
-        document.getElementById('p-avatar').onclick=()=>openProfile(activeVideo.uploader);
-        document.getElementById('p-subs').innerText=`${p?.subscribers||0} subscribers`;
-        document.getElementById('p-likes').innerText=activeVideo.likes||0;
-        document.getElementById('p-desc-content').innerText=activeVideo.details||"";
-        const t=document.getElementById('p-target');
-        t.innerHTML = activeVideo.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? `<img src="${activeVideo.url}" class="p-media">` : `<video controls autoplay src="${activeVideo.url}"></video>`;
-        await supabaseClient.from('videos').update({views:(activeVideo.views||0)+1}).eq('id',id);
-        renderRecs(); loadComments();
-    }
-    
-    function renderRecs(){
-        const rG = document.getElementById('rec-grid');
-        const l = allVideos.filter(v=>v.id != activeVideo.id).slice(0,10);
-        rG.innerHTML = l.map(v => `<div class="rec-card" onclick="playVideo('${v.id}')"><div class="rec-thumb"><img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover"></div><div class="rec-info"><div class="rec-title">${v.title}</div><div style="font-size:12px;color:gray;margin-top:4px;display:flex;align-items:center;">${formatName(v.uploader)}</div></div></div>`).join('');
-    }
-    
-    function playNext(){ const n = allVideos.filter(v=>v.id != activeVideo.id)[0]; if(n) playVideo(n.id); }
-    
-    async function postComment(){
-        const txt = document.getElementById('comm-input').value.trim(); if(!txt) return;
-        let existing = activeVideo.comments ? JSON.parse(activeVideo.comments) : [];
-        existing.push({ user: currentUser, text: txt, time: Date.now() });
-        const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(existing) }).eq('id', activeVideo.id);
-        if(!error) { activeVideo.comments = JSON.stringify(existing); document.getElementById('comm-input').value = ''; loadComments(); }
-    }
-    
-    function loadComments(){
-        const list = document.getElementById('comments-list');
-        const arr = activeVideo.comments ? JSON.parse(activeVideo.comments) : [];
-        list.innerHTML = arr.reverse().map((c, i) => `
-            <div class="comment-item">
-                <div class="v-avatar" style="width:32px; height:32px; font-size:12px; ${getAvatarStyle(c.user)}" onclick="openProfile('${c.user}')">${c.user[0]}</div>
-                <div style="flex:1">
-                    <div class="comment-user" onclick="openProfile('${c.user}')">${formatName(c.user)}</div>
-                    <div class="comment-text">${c.text}</div>
-                </div>
-                ${(DEV_USERS.includes(currentUser) || c.user === currentUser) ? `<div onclick="deleteComment(${i})" style="color:red; font-size:10px; cursor:pointer">Delete</div>` : ''}
-            </div>`).join('');
-    }
-    
-    async function deleteComment(idx){
-        let arr = JSON.parse(activeVideo.comments); arr.reverse().splice(idx, 1); arr.reverse();
-        await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
-        activeVideo.comments = JSON.stringify(arr); loadComments();
-    }
-    
-    async function handleLike(){
-        const n=(activeVideo.likes||0)+1; await supabaseClient.from('videos').update({likes:n}).eq('id',activeVideo.id);
-        document.getElementById('p-likes').innerText=n; activeVideo.likes=n;
-    }
-    
-    async function toggleSub(){
-        const b=document.getElementById('sub-btn'); b.classList.toggle('active');
-        const isS = b.classList.contains('active'); b.innerText = isS?'SUBSCRIBED':'SUBSCRIBE';
-        const p = allProfiles.find(x=>x.username===activeVideo.uploader);
-        const n = isS?(p.subscribers+1):Math.max(0,p.subscribers-1);
-        await supabaseClient.from('profiles').update({subscribers:n}).eq('username',activeVideo.uploader);
-        document.getElementById('p-subs').innerText=`${n} subscribers`; p.subscribers=n;
-    }
-    
-    async function handleUpload(){
-        const v=document.getElementById('vid-input').files[0]; 
-        const tFile=document.getElementById('vid-thumb').files[0];
-        if(!v)return;
-        const btn=document.getElementById('publish-btn'), bar=document.getElementById('prog-bar'), bg=document.getElementById('prog-bg');
-        btn.disabled=true; bg.style.display='block'; bar.style.width="10%";
-        
-        try {
-            let thumbUrl = "";
-            if(tFile){
-                const fdT=new FormData(); fdT.append('file',tFile); fdT.append('upload_preset',UPLOAD_PRESET);
-                const rT=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`,{method:"POST",body:fdT});
-                const dT=await rT.json();
-                thumbUrl = dT.secure_url;
-            }
-            bar.style.width="30%";
-
-            const fd=new FormData(); fd.append('file',v); fd.append('upload_preset',UPLOAD_PRESET);
-            const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`,{method:"POST",body:fd});
-            const d=await r.json(); bar.style.width="70%";
-            
-            if(!thumbUrl) thumbUrl = d.resource_type==='video'?d.secure_url.replace(/\.[^/.]+$/,".jpg"):d.secure_url;
-            
-            await supabaseClient.from('videos').insert([{title:document.getElementById('vid-name').value||v.name, uploader:currentUser, url:d.secure_url, thumb:thumbUrl, views:0, likes:0, details:document.getElementById('vid-desc').value}]);
-            bar.style.width="100%"; setTimeout(()=>location.reload(),800);
-        } catch(e){alert("Fail"); btn.disabled=false;}
-    }
-    
-    function openProfile(user){
-        currentCtx='profile'; document.querySelectorAll('.side-item').forEach(i=>i.classList.remove('active'));
-        document.querySelectorAll('.page-view').forEach(p=>p.classList.remove('active'));
-        document.getElementById('view-profile').classList.add('active');
-        const p = allProfiles.find(x=>x.username===user);
-        document.getElementById('profile-head').innerHTML = `<div class="v-avatar" style="width:80px;height:80px;font-size:30px;margin:0 auto;${getAvatarStyle(user)}">${user?user[0]:'?'}</div><h2 style="margin:10px 0 5px;display:flex;align-items:center;justify-content:center;gap:8px;">${formatName(user)}</h2><p style="color:gray">${p?.subscribers||0} subscribers</p>`;
-        render('profile-grid', allVideos.filter(v=>v.uploader===user));
-        closePlayer();
-    }
-    
-    function openEdit(id,t,d){
-        editingId=id; 
-        document.getElementById('edit-title').value=t; 
-        document.getElementById('edit-desc').value=decodeURIComponent(d); 
-        document.getElementById('modal-edit').style.display='flex';
-    }
-    
-    async function saveEdit(){
-        const btn=document.getElementById('save-edit-btn');
-        btn.disabled=true; btn.innerText="Saving...";
-        let updates = {
-            title:document.getElementById('edit-title').value, 
-            details:document.getElementById('edit-desc').value
-        };
-        const tFile=document.getElementById('edit-thumb').files[0];
-        if(tFile){
-            const fdT=new FormData(); fdT.append('file',tFile); fdT.append('upload_preset',UPLOAD_PRESET);
-            try{
-                const rT=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`,{method:"POST",body:fdT});
-                const dT=await rT.json();
-                updates.thumb = dT.secure_url;
-            }catch(e){}
-        }
-        await supabaseClient.from('videos').update(updates).eq('id',editingId); 
-        location.reload();
-    }
-    
-    function toggleMenu(e,id){e.stopPropagation(); closeAllMenus(); document.getElementById(`menu-${id}`).style.display='block';}
-    function closeAllMenus(){document.querySelectorAll('.dropdown').forEach(d=>d.style.display='none');}
-    async function deleteVideo(id){if(confirm("Delete?")){await supabaseClient.from('videos').delete().eq('id',id); location.reload();}}
-    function openUpload(){document.getElementById('modal-upload').style.display='flex';}
-    function closeUpload(){document.getElementById('modal-upload').style.display='none';}
-    function closeEdit(){document.getElementById('modal-edit').style.display='none';}
-    function closePlayer(){document.getElementById('player-page').style.display='none'; document.getElementById('p-target').innerHTML="";}
-    
-    async function saveName(){
-        const n=document.getElementById('set-name').value.trim(); if(!n)return;
-        const btn=document.getElementById('btn-name'); btn.innerText="Saving..."; btn.disabled=true;
-        await supabaseClient.from('profiles').update({display_name:n}).eq('username',currentUser);
-        btn.innerText="Save"; btn.disabled=false; document.getElementById('set-name').value=''; fetchData();
-    }
-    
-    async function savePfp(){
-        const v=document.getElementById('set-pfp').files[0]; if(!v)return;
-        const btn=document.getElementById('btn-pfp'); btn.innerText="Uploading..."; btn.disabled=true;
-        const fd=new FormData(); fd.append('file',v); fd.append('upload_preset',UPLOAD_PRESET);
-        try {
-            const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`,{method:"POST",body:fd});
-            const d=await r.json();
-            await supabaseClient.from('profiles').update({avatar_url:d.secure_url}).eq('username',currentUser);
-            fetchData();
-        } catch(e){alert("Fail");}
-        btn.innerText="Upload"; btn.disabled=false; document.getElementById('set-pfp').value='';
-    }
-    
-    function setTheme(t){
-        document.documentElement.setAttribute('data-theme', t);
-        localStorage.setItem('cem_theme', t);
-    }
-    
-    if(currentUser){
-        document.getElementById('nav-bar').style.display='flex'; 
-        document.getElementById('main-area').style.display='block'; 
-        if(DEV_USERS.includes(currentUser)) document.getElementById('admin-nav-item').style.display='flex';
-        fetchData();
-    } else {
-        document.getElementById('auth-shield').style.display='flex';
-    }
-</script>
+<script src="script.js"></script>
 </body>
 </html>
