@@ -7,17 +7,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #a855f7; --bg: #000000; --card: #0a0a0a; --nav: rgba(5, 5, 5, 0.95); --border: rgba(255, 255, 255, 0.08); --text: #ffffff; --text-dim: #94a3b8; }
+        [data-theme="midnight-red"] { --primary: #e11d48; --bg: #0a0000; --card: #140000; --nav: rgba(10, 0, 0, 0.95); --border: rgba(225, 29, 72, 0.2); }
+        [data-theme="ocean"] { --primary: #0ea5e9; --bg: #00050f; --card: #000a1a; --nav: rgba(0, 5, 15, 0.95); --border: rgba(14, 165, 233, 0.2); }
+        [data-theme="forest"] { --primary: #10b981; --bg: #000a05; --card: #00140a; --nav: rgba(0, 10, 5, 0.95); --border: rgba(16, 185, 129, 0.2); }
+        [data-theme="eclipse"] { --primary: #f59e0b; --bg: #0a0500; --card: #140a00; --nav: rgba(10, 5, 0, 0.95); --border: rgba(245, 158, 11, 0.2); }
+        [data-theme="abyss"] { --primary: #6366f1; --bg: #05050a; --card: #0a0a14; --nav: rgba(5, 5, 10, 0.95); --border: rgba(99, 102, 241, 0.2); }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         ::-webkit-scrollbar { width: 0px; }
-        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
+        body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; transition: background 0.3s ease; }
         #auth-shield { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
         .auth-box { background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--border); width: 95%; max-width: 400px; text-align: center; }
-        nav { background: var(--nav); backdrop-filter: blur(20px); height: 64px; display: none; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; top: 0; width: 100%; z-index: 2000; border-bottom: 1px solid var(--border); }
+        nav { background: var(--nav); backdrop-filter: blur(20px); height: 64px; display: none; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; top: 0; width: 100%; z-index: 2000; border-bottom: 1px solid var(--border); transition: background 0.3s ease, border 0.3s ease; }
         .logo { font-size: 20px; font-weight: 800; color: white; text-decoration: none; }
         .logo span { color: var(--primary); }
         .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 5px; z-index: 2001; }
         .hamburger div { width: 25px; height: 3px; background: white; border-radius: 5px; }
-        aside { width: 240px; height: 100vh; position: fixed; top: 64px; padding: 20px 16px; background: var(--bg); border-right: 1px solid var(--border); z-index: 1900; transition: transform 0.3s ease; }
+        aside { width: 240px; height: 100vh; position: fixed; top: 64px; padding: 20px 16px; background: var(--bg); border-right: 1px solid var(--border); z-index: 1900; transition: transform 0.3s ease, background 0.3s ease, border 0.3s ease; }
         .side-item { padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-dim); border-radius: 14px; margin-bottom: 4px; font-size: 14px; font-weight: 600; }
         .side-item:hover, .side-item.active { background: rgba(255,255,255,0.05); color: white; }
         .side-item.active { color: var(--primary); background: rgba(168, 85, 247, 0.1); }
@@ -41,9 +46,8 @@
         .prog-bar { width: 0%; height: 100%; background: var(--primary); transition: 0.3s; }
         input, textarea { width: 100%; background: #111; border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: #fff; margin-bottom: 12px; font-family: inherit; }
         button.primary-btn { width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; }
-        .v-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: black; cursor: pointer; }
+        .v-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: black; cursor: pointer; overflow: hidden; }
         .badge { background: var(--primary); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; color: white; margin-left: 4px; }
-        
         #comments-container { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
         .comment-item { display: flex; gap: 12px; margin-bottom: 20px; position: relative; }
         .comment-text { font-size: 14px; line-height: 1.4; color: var(--text); }
@@ -52,11 +56,18 @@
         .rec-card { display: flex; gap: 12px; cursor: pointer; margin-bottom: 12px; }
         .rec-thumb { width: 140px; aspect-ratio: 16/9; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; }
         .rec-info { overflow: hidden; }
-
+        .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; margin-bottom: 24px; max-width: 600px; }
+        .settings-card h3 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .theme-btn { padding: 15px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; font-weight: 800; color: white; text-align: center; }
         @media (max-width: 900px) { .hamburger { display: flex; } aside { transform: translateX(-100%); width: 280px; background: #050505; } aside.open { transform: translateX(0); } main { margin-left: 0; padding: 15px; } .grid { grid-template-columns: 1fr; } .player-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body onclick="closeAllMenus(); closeSidebar();">
+<script>
+    const savedTheme = localStorage.getItem('cem_theme');
+    if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
 <div id="auth-shield">
     <div class="auth-box" onclick="event.stopPropagation()">
         <h1>CEM<span>ABYSS</span></h1>
@@ -81,6 +92,7 @@
     <div class="side-item active" onclick="setContext('home', this)">🏠 Home</div>
     <div class="side-item" onclick="setContext('imageboard', this)">🖼️ Images</div>
     <div class="side-item" onclick="setContext('studio', this)">🎬 Studio</div>
+    <div class="side-item" onclick="setContext('settings', this)">⚙️ Settings</div>
     <div class="side-item" style="color:var(--primary); margin-top:10px;" onclick="openUpload()">📤 Upload</div>
 </aside>
 <main id="main-area" style="display:none;">
@@ -88,6 +100,33 @@
     <div id="view-profile" class="page-view">
         <div id="profile-head" style="text-align:center; padding: 40px 0; border-bottom:1px solid var(--border)"></div>
         <div class="grid" id="profile-grid" style="margin-top:30px;"></div>
+    </div>
+    <div id="view-settings" class="page-view">
+        <h2 style="margin-top:0">Settings</h2>
+        <div class="settings-card">
+            <h3>User Customization</h3>
+            <label style="display:block; margin-bottom:8px; font-size:14px; color:var(--text-dim)">Change Profile Picture</label>
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <input type="file" id="set-pfp" accept="image/*" style="margin-bottom:0; padding:10px;">
+                <button class="primary-btn" id="btn-pfp" style="width:auto; padding:0 20px;" onclick="savePfp()">Upload</button>
+            </div>
+            <label style="display:block; margin-bottom:8px; font-size:14px; color:var(--text-dim)">Change Name</label>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="set-name" placeholder="New Display Name" style="margin-bottom:0">
+                <button class="primary-btn" id="btn-name" style="width:auto; padding:0 20px;" onclick="saveName()">Save</button>
+            </div>
+        </div>
+        <div class="settings-card">
+            <h3>Themes</h3>
+            <div class="theme-grid">
+                <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default Purple</div>
+                <div class="theme-btn" style="background:#e11d48" onclick="setTheme('midnight-red')">Midnight Red</div>
+                <div class="theme-btn" style="background:#0ea5e9" onclick="setTheme('ocean')">Ocean Blue</div>
+                <div class="theme-btn" style="background:#10b981" onclick="setTheme('forest')">Forest Green</div>
+                <div class="theme-btn" style="background:#f59e0b" onclick="setTheme('eclipse')">Eclipse Orange</div>
+                <div class="theme-btn" style="background:#6366f1" onclick="setTheme('abyss')">Deep Abyss</div>
+            </div>
+        </div>
     </div>
 </main>
 <div id="player-page">
@@ -155,6 +194,8 @@
     function logout(){localStorage.removeItem('cem_user'); location.reload(); }
     function toggleAuthMode(){authMode=authMode==='login'?'register':'login'; document.getElementById('auth-toggle').innerText=authMode==='login'?'No account? Register':'Have an account? Login';}
     function getCol(n){let h=0; if(n){for(let i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h);} return `hsl(${Math.abs(h)%360}, 70%, 60%)`;}
+    function getAvatarStyle(u){const p=allProfiles.find(x=>x.username===u); if(p&&p.avatar_url)return `background:url('${p.avatar_url}') center/cover;color:transparent;`; return `background:${getCol(u)};`;}
+    function getDisplayName(u){const p=allProfiles.find(x=>x.username===u); return (p&&p.display_name)?p.display_name:u;}
     async function handleAuth(){
         const u=document.getElementById('login-user').value.trim(), p=document.getElementById('login-pass').value.trim();
         const {data:profile}=await supabaseClient.from('profiles').select('*').eq('username',u).maybeSingle();
@@ -175,14 +216,18 @@
         allVideos=v||[]; allProfiles=p||[]; render(); updateNav();
     }
     function updateNav(){
-        document.getElementById('u-name-display').innerText = currentUser;
-        const av = document.getElementById('nav-avatar'); av.style.background = getCol(currentUser); av.innerText = currentUser?currentUser[0].toUpperCase():'?';
+        document.getElementById('u-name-display').innerText = getDisplayName(currentUser);
+        const av = document.getElementById('nav-avatar'); av.setAttribute('style', getAvatarStyle(currentUser)); av.innerText = currentUser?currentUser[0].toUpperCase():'?';
     }
     function setContext(ctx, el){
         currentCtx=ctx; document.querySelectorAll('.side-item').forEach(i=>i.classList.remove('active'));
         if(el) el.classList.add('active'); closeSidebar();
         document.querySelectorAll('.page-view').forEach(p=>p.classList.remove('active'));
-        document.getElementById('view-home').classList.add('active'); render();
+        if(ctx==='settings'){
+            document.getElementById('view-settings').classList.add('active');
+        } else {
+            document.getElementById('view-home').classList.add('active'); render();
+        }
     }
     function render(target='v-grid', list=null){
         const grid=document.getElementById(target); let d=list||allVideos;
@@ -201,8 +246,8 @@
                 </div>
                 <div class="v-thumb-wrap" onclick="playVideo('${v.id}')"><img src="${v.thumb}" class="v-img-prev"></div>
                 <div style="display:flex; gap:12px; padding:12px 0;">
-                    <div class="v-avatar" style="background:${getCol(v.uploader)}" onclick="event.stopPropagation(); openProfile('${v.uploader}')">${v.uploader?v.uploader[0]:'?'}</div>
-                    <div><div style="font-weight:700;">${v.title}</div><div style="font-size:12px;color:gray;">${v.uploader} ${p?.is_verified?'<span class="badge">✓</span>':''}</div></div>
+                    <div class="v-avatar" style="${getAvatarStyle(v.uploader)}" onclick="event.stopPropagation(); openProfile('${v.uploader}')">${v.uploader?v.uploader[0]:'?'}</div>
+                    <div><div style="font-weight:700;">${v.title}</div><div style="font-size:12px;color:gray;">${getDisplayName(v.uploader)} ${p?.is_verified?'<span class="badge">✓</span>':''}</div></div>
                 </div>
             </div>`;
         }).join('');
@@ -211,9 +256,9 @@
         activeVideo=allVideos.find(v=>v.id == id); document.getElementById('player-page').style.display='block';
         const p = allProfiles.find(x=>x.username===activeVideo.uploader);
         document.getElementById('p-title').innerText=activeVideo.title;
-        document.getElementById('p-uploader').innerText=activeVideo.uploader;
+        document.getElementById('p-uploader').innerText=getDisplayName(activeVideo.uploader);
         document.getElementById('p-uploader').onclick=()=>openProfile(activeVideo.uploader);
-        document.getElementById('p-avatar').style.background=getCol(activeVideo.uploader);
+        document.getElementById('p-avatar').setAttribute('style', `width:40px; height:40px; ${getAvatarStyle(activeVideo.uploader)}`);
         document.getElementById('p-avatar').innerText=activeVideo.uploader[0];
         document.getElementById('p-avatar').onclick=()=>openProfile(activeVideo.uploader);
         document.getElementById('p-subs').innerText=`${p?.subscribers||0} subscribers`;
@@ -227,7 +272,7 @@
     function renderRecs(){
         const rG = document.getElementById('rec-grid');
         const l = allVideos.filter(v=>v.id != activeVideo.id).slice(0,10);
-        rG.innerHTML = l.map(v => `<div class="rec-card" onclick="playVideo('${v.id}')"><div class="rec-thumb"><img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover"></div><div class="rec-info"><div class="rec-title">${v.title}</div><div style="font-size:12px;color:gray;margin-top:4px">${v.uploader}</div></div></div>`).join('');
+        rG.innerHTML = l.map(v => `<div class="rec-card" onclick="playVideo('${v.id}')"><div class="rec-thumb"><img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover"></div><div class="rec-info"><div class="rec-title">${v.title}</div><div style="font-size:12px;color:gray;margin-top:4px">${getDisplayName(v.uploader)}</div></div></div>`).join('');
     }
     function playNext(){ const n = allVideos.filter(v=>v.id != activeVideo.id)[0]; if(n) playVideo(n.id); }
     async function postComment(){
@@ -243,9 +288,9 @@
         const cP = allProfiles.find(x=>x.username===currentUser);
         list.innerHTML = arr.reverse().map((c, i) => `
             <div class="comment-item">
-                <div class="v-avatar" style="width:32px; height:32px; font-size:12px; background:${getCol(c.user)}" onclick="openProfile('${c.user}')">${c.user[0]}</div>
+                <div class="v-avatar" style="width:32px; height:32px; font-size:12px; ${getAvatarStyle(c.user)}" onclick="openProfile('${c.user}')">${c.user[0]}</div>
                 <div style="flex:1">
-                    <div class="comment-user" onclick="openProfile('${c.user}')">${c.user}</div>
+                    <div class="comment-user" onclick="openProfile('${c.user}')">${getDisplayName(c.user)}</div>
                     <div class="comment-text">${c.text}</div>
                 </div>
                 ${(cP?.is_verified || c.user === currentUser) ? `<div onclick="deleteComment(${i})" style="color:red; font-size:10px; cursor:pointer">Delete</div>` : ''}
@@ -282,10 +327,11 @@
         } catch(e){alert("Fail"); btn.disabled=false;}
     }
     function openProfile(user){
-        currentCtx='profile'; document.querySelectorAll('.page-view').forEach(p=>p.classList.remove('active'));
+        currentCtx='profile'; document.querySelectorAll('.side-item').forEach(i=>i.classList.remove('active'));
+        document.querySelectorAll('.page-view').forEach(p=>p.classList.remove('active'));
         document.getElementById('view-profile').classList.add('active');
         const p = allProfiles.find(x=>x.username===user);
-        document.getElementById('profile-head').innerHTML = `<div class="v-avatar" style="width:80px;height:80px;font-size:30px;margin:0 auto;background:${getCol(user)}">${user?user[0]:'?'}</div><h2 style="margin:10px 0 5px">${user} ${p?.is_verified?'<span class="badge" style="width:18px;height:18px">✓</span>':''}</h2><p style="color:gray">${p?.subscribers||0} subscribers</p>`;
+        document.getElementById('profile-head').innerHTML = `<div class="v-avatar" style="width:80px;height:80px;font-size:30px;margin:0 auto;${getAvatarStyle(user)}">${user?user[0]:'?'}</div><h2 style="margin:10px 0 5px">${getDisplayName(user)} ${p?.is_verified?'<span class="badge" style="width:18px;height:18px">✓</span>':''}</h2><p style="color:gray">${p?.subscribers||0} subscribers</p>`;
         render('profile-grid', allVideos.filter(v=>v.uploader===user));
         closePlayer();
     }
@@ -298,6 +344,28 @@
     function closeUpload(){document.getElementById('modal-upload').style.display='none';}
     function closeEdit(){document.getElementById('modal-edit').style.display='none';}
     function closePlayer(){document.getElementById('player-page').style.display='none'; document.getElementById('p-target').innerHTML="";}
+    async function saveName(){
+        const n=document.getElementById('set-name').value.trim(); if(!n)return;
+        const btn=document.getElementById('btn-name'); btn.innerText="Saving..."; btn.disabled=true;
+        await supabaseClient.from('profiles').update({display_name:n}).eq('username',currentUser);
+        btn.innerText="Save"; btn.disabled=false; document.getElementById('set-name').value=''; fetchData();
+    }
+    async function savePfp(){
+        const v=document.getElementById('set-pfp').files[0]; if(!v)return;
+        const btn=document.getElementById('btn-pfp'); btn.innerText="Uploading..."; btn.disabled=true;
+        const fd=new FormData(); fd.append('file',v); fd.append('upload_preset',UPLOAD_PRESET);
+        try {
+            const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`,{method:"POST",body:fd});
+            const d=await r.json();
+            await supabaseClient.from('profiles').update({avatar_url:d.secure_url}).eq('username',currentUser);
+            fetchData();
+        } catch(e){alert("Fail");}
+        btn.innerText="Upload"; btn.disabled=false; document.getElementById('set-pfp').value='';
+    }
+    function setTheme(t){
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem('cem_theme', t);
+    }
     if(currentUser){document.getElementById('nav-bar').style.display='flex'; document.getElementById('main-area').style.display='block'; fetchData();}
     else{document.getElementById('auth-shield').style.display='flex';}
 </script>
