@@ -3,12 +3,12 @@ const DEV_USERS = ["Zoro", "Redtree1222", "redtree"];
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = localStorage.getItem('cem_user'), allVideos = [], allProfiles = [], allRanks = [], allSettings = [], allAudit = [], currentCtx = 'home', authMode = 'login', activeVideo = null, editingId = null;
 
-function toggleSidebar() { 
-    document.getElementById('side-bar').classList.toggle('open'); 
+function toggleSidebar() {
+    document.getElementById('side-bar').classList.toggle('open');
     document.getElementById('side-overlay').style.display = document.getElementById('side-bar').classList.contains('open') ? 'block' : 'none';
 }
-function closeSidebar() { 
-    document.getElementById('side-bar').classList.remove('open'); 
+function closeSidebar() {
+    document.getElementById('side-bar').classList.remove('open');
     document.getElementById('side-overlay').style.display = 'none';
 }
 function logout() { supabaseClient.auth.signOut().then(() => { localStorage.removeItem('cem_user'); location.reload(); }); }
@@ -76,7 +76,7 @@ async function handleAuth() {
 
     if (authMode === 'register') {
         if (!u) return alert("Please choose a username");
-        
+
         if (localStorage.getItem('cem_registration_ipblock')) {
             return alert("Registration Limit Exceeded: Device IP blocked. You already made an account.");
         }
@@ -133,9 +133,10 @@ async function fetchData() {
     checkDailyCoins();
     applyGlobalBanner();
     updateRankCSS();
-    if (currentCtx === 'admin') renderAdmin(); else if (currentCtx !== 'profile' && currentCtx !== 'announcements') render();
+    if (currentCtx === 'admin') renderAdmin(); else if (currentCtx !== 'profile' && currentCtx !== 'announcements' && currentCtx !== 'settings') render();
     if (currentCtx === 'marketplace') renderMarketplace();
     if (currentCtx === 'announcements') renderAnnouncements();
+    if (currentCtx === 'settings') renderSettings();
     updateNav();
 }
 
@@ -199,9 +200,9 @@ function render(target = 'v-grid', list = null) {
                         </div>
                     </div>
                 `;
-            } else { if(pCont) pCont.innerHTML = ''; }
+            } else { if (pCont) pCont.innerHTML = ''; }
         } else {
-            if(pCont) pCont.innerHTML = '';
+            if (pCont) pCont.innerHTML = '';
         }
     }
 
@@ -227,12 +228,12 @@ function render(target = 'v-grid', list = null) {
 
 function handleSearch() {
     const q = document.getElementById('global-search').value.trim().toLowerCase();
-    
+
     if (!q) {
         if (currentCtx === 'home') render('v-grid', null);
         return;
     }
-    
+
     if (currentCtx !== 'home') {
         document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
         document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
@@ -242,7 +243,7 @@ function handleSearch() {
 
     // Fuzzy matching: "mri" matches "mario"
     const fuzzyRegex = new RegExp(q.split('').join('.*?'), 'i');
-    
+
     const results = allVideos.filter(v => {
         if (!(DEV_USERS.includes(currentUser) || v.uploader === currentUser)) {
             const p = allProfiles.find(x => x.username === v.uploader);
@@ -250,7 +251,7 @@ function handleSearch() {
         }
         return fuzzyRegex.test(v.title) || fuzzyRegex.test(v.uploader);
     });
-    
+
     render('v-grid', results);
 }
 
@@ -522,29 +523,29 @@ async function deleteRank() {
     fetchData();
 }
 
-async function toggleVerify(u, s) { 
-    const p = allProfiles.find(x => x.username === u); if(p) p.is_verified = s;
+async function toggleVerify(u, s) {
+    const p = allProfiles.find(x => x.username === u); if (p) p.is_verified = s;
     searchAdminUser();
-    await supabaseClient.from('profiles').update({ is_verified: s }).eq('username', u); 
-    fetchData(); 
+    await supabaseClient.from('profiles').update({ is_verified: s }).eq('username', u);
+    fetchData();
 }
 
-async function toggleBan(u, s) { 
-    const p = allProfiles.find(x => x.username === u); if(p) p.is_banned = s;
+async function toggleBan(u, s) {
+    const p = allProfiles.find(x => x.username === u); if (p) p.is_banned = s;
     searchAdminUser();
-    await supabaseClient.from('profiles').update({ is_banned: s }).eq('username', u); 
-    fetchData(); 
+    await supabaseClient.from('profiles').update({ is_banned: s }).eq('username', u);
+    fetchData();
 }
 
-async function deleteAccount(u) { 
-    if (confirm("Nuke this user and ALL their videos?")) { 
+async function deleteAccount(u) {
+    if (confirm("Nuke this user and ALL their videos?")) {
         allProfiles = allProfiles.filter(x => x.username !== u);
         const searchRes = document.getElementById('admin-search-result');
-        if(searchRes) searchRes.innerHTML = '<p style="color:var(--primary)">User completely erased.</p>';
-        await supabaseClient.from('videos').delete().eq('uploader', u); 
-        await supabaseClient.from('profiles').delete().eq('username', u); 
-        fetchData(); 
-    } 
+        if (searchRes) searchRes.innerHTML = '<p style="color:var(--primary)">User completely erased.</p>';
+        await supabaseClient.from('videos').delete().eq('uploader', u);
+        await supabaseClient.from('profiles').delete().eq('username', u);
+        fetchData();
+    }
 }
 
 async function playVideo(id) {
@@ -560,7 +561,7 @@ async function playVideo(id) {
 
     let localLikes = JSON.parse(localStorage.getItem(`cem_likes_${currentUser}`) || '[]');
     let localSubs = JSON.parse(localStorage.getItem(`cem_subs_${currentUser}`) || '[]');
-    
+
     const likeBtn = document.getElementById('like-btn');
     if (likeBtn) {
         if (localLikes.includes(activeVideo.id)) {
@@ -574,7 +575,7 @@ async function playVideo(id) {
         const pLikes = document.getElementById('p-likes');
         if (pLikes) pLikes.innerText = activeVideo.likes || 0;
     }
-    
+
     const subBtn = document.getElementById('sub-btn');
     if (subBtn) {
         if (localSubs.includes(activeVideo.uploader)) {
@@ -604,14 +605,14 @@ function renderRecs() {
     rG.innerHTML = l.map(v => `<div class="rec-card" onclick="playVideo('${v.id}')"><div class="rec-thumb"><img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover"></div><div class="rec-info"><div class="rec-title">${v.title}</div><div style="font-size:12px;color:gray;margin-top:4px;display:flex;align-items:center;">${formatName(v.uploader)}</div></div></div>`).join('');
 }
 
-function playNext() { 
+function playNext() {
     const validRecs = allVideos.filter(v => v.id != activeVideo.id).filter(v => {
         if (DEV_USERS.includes(currentUser) || v.uploader === currentUser) return true;
         const p = allProfiles.find(x => x.username === v.uploader);
         return !(p && p.is_shadowbanned);
     });
-    const n = validRecs[0]; 
-    if (n) playVideo(n.id); 
+    const n = validRecs[0];
+    if (n) playVideo(n.id);
 }
 
 async function postComment() {
@@ -625,9 +626,9 @@ async function postComment() {
 function loadComments() {
     const list = document.getElementById('comments-list');
     let arr = activeVideo.comments ? JSON.parse(activeVideo.comments) : [];
-    
+
     arr = arr.map((c, idx) => ({ ...c, originalIdx: idx })).reverse();
-    
+
     const filteredComments = arr.filter(c => {
         if (DEV_USERS.includes(currentUser) || c.user === currentUser) return true;
         const p = allProfiles.find(x => x.username === c.user);
@@ -646,8 +647,8 @@ function loadComments() {
 }
 
 async function deleteComment(idx) {
-    let arr = JSON.parse(activeVideo.comments); 
-    arr.splice(idx, 1); 
+    let arr = JSON.parse(activeVideo.comments);
+    arr.splice(idx, 1);
     await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
     activeVideo.comments = JSON.stringify(arr); loadComments();
 }
@@ -657,14 +658,14 @@ async function handleLike() {
     let localLikes = JSON.parse(localStorage.getItem(`cem_likes_${currentUser}`) || '[]');
     if (isLiking || localLikes.includes(activeVideo.id)) return;
     isLiking = true;
-    
-    const n = (activeVideo.likes || 0) + 1; 
-    
+
+    const n = (activeVideo.likes || 0) + 1;
+
     localLikes.push(activeVideo.id);
     localStorage.setItem(`cem_likes_${currentUser}`, JSON.stringify(localLikes));
-    
+
     activeVideo.likes = n;
-    const b = document.getElementById('like-btn'); 
+    const b = document.getElementById('like-btn');
     if (b) {
         b.style.background = 'var(--primary)';
         b.innerHTML = `👍 Liked (<span id="p-likes">${n}</span>)`;
@@ -679,14 +680,14 @@ async function toggleSub() {
     if (isSubbing) return;
     isSubbing = true;
 
-    const b = document.getElementById('sub-btn'); 
+    const b = document.getElementById('sub-btn');
     let localSubs = JSON.parse(localStorage.getItem(`cem_subs_${currentUser}`) || '[]');
     const isCurrentlySubbed = localSubs.includes(activeVideo.uploader);
     const isNowSubbed = !isCurrentlySubbed;
 
     const p = allProfiles.find(x => x.username === activeVideo.uploader);
     let n = p.subscribers || 0;
-    
+
     if (isNowSubbed) {
         n += 1;
         b.classList.add('active');
@@ -698,9 +699,9 @@ async function toggleSub() {
         b.innerText = 'SUBSCRIBE';
         localSubs = localSubs.filter(x => x !== activeVideo.uploader);
     }
-    
+
     localStorage.setItem(`cem_subs_${currentUser}`, JSON.stringify(localSubs));
-    document.getElementById('p-subs').innerText = `${n} subscribers`; 
+    document.getElementById('p-subs').innerText = `${n} subscribers`;
     p.subscribers = n;
 
     await supabaseClient.from('profiles').update({ subscribers: n }).eq('username', activeVideo.uploader);
@@ -711,10 +712,10 @@ async function handleUpload() {
     const v = document.getElementById('vid-input').files[0];
     const tFile = document.getElementById('vid-thumb').files[0];
     if (!v) return alert("Please select a file to upload!");
-    
+
     // Cloudinary usually limits unsigned uploads to ~10MB for free tiers
     if (v.size > 100 * 1024 * 1024) return alert("File is too large! Please keep it under 100MB depending on your Cloudinary limits.");
-    
+
     const btn = document.getElementById('publish-btn'), bar = document.getElementById('prog-bar'), bg = document.getElementById('prog-bg');
     btn.disabled = true; bg.style.display = 'block'; bar.style.width = "10%";
 
@@ -731,31 +732,31 @@ async function handleUpload() {
 
         const fd = new FormData(); fd.append('file', v); fd.append('upload_preset', UPLOAD_PRESET);
         const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd });
-        const d = await r.json(); 
-        
+        const d = await r.json();
+
         if (d.error) throw new Error("Video Upload Error: " + d.error.message);
         bar.style.width = "70%";
 
         if (!thumbUrl) thumbUrl = d.resource_type === 'video' ? d.secure_url.replace(/\.[^/.]+$/, ".jpg") : d.secure_url;
 
-        const { error: dbError } = await supabaseClient.from('videos').insert([{ 
-            title: document.getElementById('vid-name').value || v.name, 
-            uploader: currentUser, 
-            url: d.secure_url, 
-            thumb: thumbUrl, 
-            views: 0, 
-            likes: 0, 
-            details: document.getElementById('vid-desc').value 
+        const { error: dbError } = await supabaseClient.from('videos').insert([{
+            title: document.getElementById('vid-name').value || v.name,
+            uploader: currentUser,
+            url: d.secure_url,
+            thumb: thumbUrl,
+            views: 0,
+            likes: 0,
+            details: document.getElementById('vid-desc').value
         }]);
 
         if (dbError) throw new Error("Supabase Database Error: " + dbError.message);
 
-        bar.style.width = "100%"; 
+        bar.style.width = "100%";
         setTimeout(() => location.reload(), 800);
-    } catch (e) { 
+    } catch (e) {
         console.error(e);
-        alert("Upload Failed -> " + e.message); 
-        btn.disabled = false; 
+        alert("Upload Failed -> " + e.message);
+        btn.disabled = false;
         bar.style.width = "0%";
     }
 }
@@ -806,14 +807,14 @@ function closeEdit() { document.getElementById('modal-edit').style.display = 'no
 function closePlayer() { document.getElementById('player-page').style.display = 'none'; document.getElementById('p-target').innerHTML = ""; }
 
 async function pinVideo(id) {
-    if(!confirm("Pin this video to the top of the Home page globally?")) return;
+    if (!confirm("Pin this video to the top of the Home page globally?")) return;
     const { error } = await supabaseClient.from('site_settings').upsert([{ id: 'pinned_video', data: { videoId: id } }]);
-    
+
     if (error) {
         alert("SQL Error: " + error.message + " - Ensure site_settings table allows INSERT/UPDATE (RLS policies)!");
         return;
     }
-    
+
     logAudit('PINNED_VIDEO', id, `Pinned video to front page`);
     fetchData();
 }
@@ -843,9 +844,29 @@ async function savePfp() {
     btn.innerText = "Upload"; btn.disabled = false; document.getElementById('set-pfp').value = '';
 }
 
+function setFrutigerBg(img) {
+    localStorage.setItem('cem_frutiger_bg', img);
+    document.body.style.backgroundImage = `url('${img}')`;
+    document.body.style.backgroundSize = "cover";
+    document.body.style.backgroundPosition = "center";
+    document.body.style.backgroundAttachment = "fixed";
+}
+
 function setTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('cem_theme', t);
+    
+    if (t === 'frutiger') {
+        const bg = localStorage.getItem('cem_frutiger_bg') || 'frutiger.jpg';
+        setFrutigerBg(bg);
+    } else {
+        document.body.style.backgroundImage = '';
+        document.body.style.backgroundSize = '';
+        document.body.style.backgroundPosition = '';
+        document.body.style.backgroundAttachment = '';
+    }
+    
+    if(currentCtx === 'settings') renderSettings();
 }
 
 function applyGlobalBanner() {
@@ -878,19 +899,19 @@ async function toggleShadowban(u) {
     const p = allProfiles.find(x => x.username === u);
     if (!p) return;
     const s = !p.is_shadowbanned;
-    
+
     p.is_shadowbanned = s; // update locally instantly
     searchAdminUser();
-    
+
     const { error } = await supabaseClient.from('profiles').update({ is_shadowbanned: s }).eq('username', u);
-    
+
     if (error) {
         p.is_shadowbanned = !s; // revert on fail
         searchAdminUser();
         alert("SQL Error: Missing 'is_shadowbanned' bool column in 'profiles' table. It failed to update!");
         return;
     }
-    
+
     logAudit(s ? 'SHADOWBAN' : 'UN-SHADOWBAN', u, `Shadowban status changed`);
     fetchData();
 }
@@ -902,8 +923,8 @@ function checkDailyCoins() {
     const last = parseInt(p.last_daily) || 0;
     if (now - last > 86400000) {
         const newCoins = (p.coins || 0) + 100;
-        supabaseClient.from('profiles').update({ coins: newCoins, last_daily: now }).eq('username', currentUser).then(res=>{
-            if(!res.error) {
+        supabaseClient.from('profiles').update({ coins: newCoins, last_daily: now }).eq('username', currentUser).then(res => {
+            if (!res.error) {
                 allProfiles.find(x => x.username === currentUser).coins = newCoins;
                 allProfiles.find(x => x.username === currentUser).last_daily = now;
                 document.getElementById('u-coins').innerText = `🪙 ${newCoins}`;
@@ -929,16 +950,16 @@ async function postAnnouncement() {
     const title = document.getElementById('admin-ann-title').value.trim();
     const body = document.getElementById('admin-ann-body').value.trim();
     const color = document.getElementById('admin-ann-color').value;
-    if(!title || !body) return alert("Title and Body required");
+    if (!title || !body) return alert("Title and Body required");
 
     const ann = { id: Date.now().toString(), title, body, color, author: currentUser, date: Date.now() };
-    
+
     let existing = [];
     const setRec = allSettings.find(x => x.id === 'announcements');
-    if(setRec && setRec.data) existing = setRec.data;
-    
+    if (setRec && setRec.data) existing = setRec.data;
+
     existing.unshift(ann);
-    
+
     await supabaseClient.from('site_settings').upsert([{ id: 'announcements', data: existing }]);
     logAudit('POSTED_ANNOUNCEMENT', 'Global', `Title: ${title}`);
     alert("Announcement Posted!");
@@ -950,7 +971,7 @@ async function postAnnouncement() {
 function renderAnnouncements() {
     const setRec = allSettings.find(x => x.id === 'announcements');
     const list = (setRec && setRec.data) ? setRec.data : [];
-    if(list.length === 0) {
+    if (list.length === 0) {
         document.getElementById('announcement-grid').innerHTML = '<p style="color:gray">No announcements yet.</p>';
         return;
     }
@@ -971,9 +992,9 @@ function renderAnnouncements() {
 }
 
 async function deleteAnnouncement(id) {
-    if(!confirm("Delete announcement?")) return;
+    if (!confirm("Delete announcement?")) return;
     const setRec = allSettings.find(x => x.id === 'announcements');
-    if(!setRec) return;
+    if (!setRec) return;
     const filtered = setRec.data.filter(x => x.id !== id);
     await supabaseClient.from('site_settings').upsert([{ id: 'announcements', data: filtered }]);
     fetchData();
@@ -984,7 +1005,7 @@ const MARKET_THEMES = [
     { id: 'tropical', name: 'Animated Tropical', price: 2500, color: 'linear-gradient(135deg, #f15bb5, #fee440)' },
     { id: 'rainbow', name: 'Animated Rainbow', price: 5000, color: 'linear-gradient(45deg,red,orange,yellow,green,blue,purple)' },
     { id: 'glitched', name: 'Glitched Hacker', price: 7500, color: '#00ff00' },
-    { id: 'frutiger', name: 'Frutiger Aero (Windows 7)', price: 10000, color: 'linear-gradient(to bottom, #00a8ff, #005f99)' }
+    { id: 'frutiger', name: 'Frutiger Aero', price: 10000, color: 'linear-gradient(to bottom, #00a8ff, #005f99)' }
 ];
 
 function renderMarketplace() {
@@ -1042,7 +1063,7 @@ async function buyTheme(tid, price) {
     if (!t) return alert("Theme not found.");
 
     const { error } = await supabaseClient.from('profiles').update({ coins: currentCoins - t.price, unlocked_themes: existingThemes }).eq('username', currentUser);
-    
+
     if (!error) {
         logAudit('PURCHASE_THEME', currentUser, `Bought ${t.id} for ${t.price} coins`);
         alert(`Successfully purchased ${t.name}! You can equip it in the Settings Tab.`);
@@ -1055,8 +1076,8 @@ async function buyTheme(tid, price) {
 
 function renderSettings() {
     const p = allProfiles.find(x => x.username === currentUser);
-    if(!p) return;
-    
+    if (!p) return;
+
     let html = `
         <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default Purple</div>
         <div class="theme-btn" style="background:#e11d48" onclick="setTheme('midnight-red')">Midnight Red</div>
@@ -1065,13 +1086,13 @@ function renderSettings() {
         <div class="theme-btn" style="background:#f59e0b" onclick="setTheme('eclipse')">Eclipse Orange</div>
         <div class="theme-btn" style="background:#6366f1" onclick="setTheme('abyss')">Deep Abyss</div>
     `;
-    
+
     let myThemes = [];
     if (p.unlocked_themes) {
         if (typeof p.unlocked_themes === 'string') myThemes = JSON.parse(p.unlocked_themes);
         else myThemes = p.unlocked_themes;
     }
-    
+
     MARKET_THEMES.forEach(t => {
         if (myThemes.includes(t.id) || DEV_USERS.includes(currentUser)) {
             html += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold; color:${t.id === 'frutiger' || t.id === 'creamy' ? '#000' : '#fff'}" onclick="setTheme('${t.id}')">★ ${t.name}</div>`;
@@ -1079,7 +1100,7 @@ function renderSettings() {
     });
 
     const grid = document.getElementById('my-themes-grid');
-    if(grid) grid.innerHTML = html;
+    if (grid) grid.innerHTML = html;
 }
 
 function renderAdminLogs() {

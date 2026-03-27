@@ -31,10 +31,17 @@
 </head>
 
 <body>
-    <script>
-        const savedTheme = localStorage.getItem('cem_theme');
-        if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
-    </script>
+<script>
+    const savedTheme = localStorage.getItem('cem_theme');
+    if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+    if(savedTheme === 'frutiger') {
+        const fbg = localStorage.getItem('cem_frutiger_bg') || 'frutiger.jpg';
+        document.body.style.backgroundImage = "url('" + fbg + "')";
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center";
+        document.body.style.backgroundAttachment = "fixed";
+    }
+</script>
     <div id="global-banner"
         style="display:none; position:fixed; bottom:20px; right:20px; z-index:10000; background:var(--primary); color:white; padding:15px; border-radius:12px; font-weight:800; box-shadow:0 5px 20px rgba(0,0,0,0.5); max-width:400px; gap:15px; align-items:center; border:1px solid rgba(255,255,255,0.2);">
         <span id="banner-text-content" style="flex:1;"></span>
