@@ -8,6 +8,32 @@
 [data-theme="tropical"] { --primary: #f15bb5; --bg: #032b43; --card: #0e3b5e; --nav: rgba(3, 43, 67, 0.95); --border: rgba(0, 245, 212, 0.5); --text: #ffffff; --text-dim: #94e8db; }
 [data-theme="rainbow"] { --primary: #ff007f; --bg: #1a0b2e; --card: #2d1b4e; --nav: rgba(26, 11, 46, 0.95); --border: rgba(255, 0, 127, 0.4); } 
 [data-theme="glitched"] { --primary: #00ff00; --bg: #000000; --card: #080808; --nav: rgba(0, 0, 0, 0.95); --border: rgba(0, 255, 0, 0.4); }
+
+/* Frutiger Aero Theme */
+[data-theme="frutiger"] { --primary: #00a8ff; --bg: transparent; --card: rgba(255, 255, 255, 0.3); --nav: rgba(255, 255, 255, 0.4); --border: rgba(255, 255, 255, 0.6); --text: #050505; --text-dim: #333333; }
+[data-theme="frutiger"] body { background: url('frutiger.jpg') center/cover fixed; color: #111; }
+[data-theme="frutiger"] .card, [data-theme="frutiger"] .settings-card, [data-theme="frutiger"] .modal-box, [data-theme="frutiger"] aside, [data-theme="frutiger"] nav { 
+    -webkit-backdrop-filter: blur(25px) saturate(150%);
+    backdrop-filter: blur(25px) saturate(150%);
+    background: rgba(255, 255, 255, 0.3) !important; 
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 0 15px rgba(255,255,255,0.8);
+    color: #111 !important;
+    border: 1px solid rgba(255,255,255,0.6) !important;
+}
+[data-theme="frutiger"] .logo, [data-theme="frutiger"] .glow-text, [data-theme="frutiger"] h1, [data-theme="frutiger"] h2, [data-theme="frutiger"] h3 { color: #050505; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
+[data-theme="frutiger"] .logo span { color: #0088cc; }
+[data-theme="frutiger"] input, [data-theme="frutiger"] textarea, [data-theme="frutiger"] select { background: rgba(255,255,255,0.4) !important; border: 1px solid rgba(255,255,255,0.8) !important; color: #000 !important; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+[data-theme="frutiger"] ::placeholder { color: rgba(0,0,0,0.6); }
+[data-theme="frutiger"] .primary-btn { background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(200,225,255,0.6)); border: 1px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1); color: #005f99; font-weight: 800; text-shadow: none; }
+[data-theme="frutiger"] .side-item { color: #222; }
+[data-theme="frutiger"] .side-item:hover, [data-theme="frutiger"] .side-item.active { background: rgba(255,255,255,0.5); color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+[data-theme="frutiger"] .hamburger div { background: #000; }
+[data-theme="frutiger"] .dropdown { background: rgba(255,255,255,0.8); backdrop-filter:blur(10px); }
+[data-theme="frutiger"] .dropdown div { color: #111; }
+[data-theme="frutiger"] .comment-text { color: #222; }
+[data-theme="frutiger"] .rec-title { color: #111; }
+[data-theme="frutiger"] #player-page { background: rgba(255,255,255,0.4); backdrop-filter: blur(30px); }
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 ::-webkit-scrollbar { width: 0px; }
 body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; transition: background 0.3s ease; }

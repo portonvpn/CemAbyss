@@ -149,7 +149,7 @@ function setContext(ctx, el) {
     if (el) el.classList.add('active'); closeSidebar();
     document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
     if (ctx === 'settings') {
-        document.getElementById('view-settings').classList.add('active');
+        document.getElementById('view-settings').classList.add('active'); renderSettings();
     } else if (ctx === 'admin') {
         document.getElementById('view-admin').classList.add('active'); renderAdmin();
     } else if (ctx === 'marketplace') {
@@ -980,10 +980,11 @@ async function deleteAnnouncement(id) {
 }
 
 const MARKET_THEMES = [
-    { id: 'creamy', name: 'Creamy Gold', price: 100, color: '#d4a373' },
-    { id: 'tropical', name: 'Animated Tropical', price: 500, color: 'linear-gradient(135deg, #f15bb5, #fee440)' },
-    { id: 'rainbow', name: 'Animated Rainbow', price: 1000, color: 'linear-gradient(45deg,red,orange,yellow,green,blue,purple)' },
-    { id: 'glitched', name: 'Glitched Hacker', price: 1500, color: '#00ff00' }
+    { id: 'creamy', name: 'Creamy Gold', price: 1000, color: '#d4a373' },
+    { id: 'tropical', name: 'Animated Tropical', price: 2500, color: 'linear-gradient(135deg, #f15bb5, #fee440)' },
+    { id: 'rainbow', name: 'Animated Rainbow', price: 5000, color: 'linear-gradient(45deg,red,orange,yellow,green,blue,purple)' },
+    { id: 'glitched', name: 'Glitched Hacker', price: 7500, color: '#00ff00' },
+    { id: 'frutiger', name: 'Frutiger Aero (Windows 7)', price: 10000, color: 'linear-gradient(to bottom, #00a8ff, #005f99)' }
 ];
 
 function renderMarketplace() {
@@ -1026,16 +1027,59 @@ async function buyTheme(tid, price) {
 
     if (!confirm(`Buy theme for ${price} coins?`)) return;
 
-    let unlocked = p.unlocked_themes || [];
-    unlocked.push(tid);
+    let existingThemes = p.unlocked_themes || [];
+    if (typeof existingThemes === 'string') {
+        try {
+            existingThemes = JSON.parse(existingThemes);
+        } catch (e) {
+            console.error("Error parsing unlocked_themes:", e);
+            existingThemes = [];
+        }
+    }
+    existingThemes.push(tid);
 
-    const { error } = await supabaseClient.from('profiles').update({
-        coins: coins - price,
-        unlocked_themes: unlocked
-    }).eq('username', currentUser);
+    const t = MARKET_THEMES.find(theme => theme.id === tid);
+    if (!t) return alert("Theme not found.");
 
-    if (!error) { alert("Theme Unlocked! Go to settings to equip it."); fetchData(); }
-    else alert("Error purchasing theme.", error);
+    const { error } = await supabaseClient.from('profiles').update({ coins: currentCoins - t.price, unlocked_themes: existingThemes }).eq('username', currentUser);
+    
+    if (!error) {
+        logAudit('PURCHASE_THEME', currentUser, `Bought ${t.id} for ${t.price} coins`);
+        alert(`Successfully purchased ${t.name}! You can equip it in the Settings Tab.`);
+        setTheme(t.id);
+        fetchData();
+    } else {
+        alert("Error purchasing theme.", error);
+    }
+}
+
+function renderSettings() {
+    const p = allProfiles.find(x => x.username === currentUser);
+    if(!p) return;
+    
+    let html = `
+        <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default Purple</div>
+        <div class="theme-btn" style="background:#e11d48" onclick="setTheme('midnight-red')">Midnight Red</div>
+        <div class="theme-btn" style="background:#0ea5e9" onclick="setTheme('ocean')">Ocean Blue</div>
+        <div class="theme-btn" style="background:#10b981" onclick="setTheme('forest')">Forest Green</div>
+        <div class="theme-btn" style="background:#f59e0b" onclick="setTheme('eclipse')">Eclipse Orange</div>
+        <div class="theme-btn" style="background:#6366f1" onclick="setTheme('abyss')">Deep Abyss</div>
+    `;
+    
+    let myThemes = [];
+    if (p.unlocked_themes) {
+        if (typeof p.unlocked_themes === 'string') myThemes = JSON.parse(p.unlocked_themes);
+        else myThemes = p.unlocked_themes;
+    }
+    
+    MARKET_THEMES.forEach(t => {
+        if (myThemes.includes(t.id) || DEV_USERS.includes(currentUser)) {
+            html += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold; color:${t.id === 'frutiger' || t.id === 'creamy' ? '#000' : '#fff'}" onclick="setTheme('${t.id}')">★ ${t.name}</div>`;
+        }
+    });
+
+    const grid = document.getElementById('my-themes-grid');
+    if(grid) grid.innerHTML = html;
 }
 
 function renderAdminLogs() {
