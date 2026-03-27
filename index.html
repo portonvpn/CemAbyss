@@ -6,178 +6,203 @@
     <title>CemAbyss | Zoro(dev)</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #a855f7; --secondary: #22d3ee; --bg: #020202; --glass: rgba(5, 5, 5, 0.98); --border: rgba(255, 255, 255, 0.08); --text: #ffffff; --text-dim: #71717a; }
-        * { box-sizing: border-box; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        :root { --primary: #a855f7; --bg: #000000; --card: #0a0a0a; --nav: rgba(5, 5, 5, 0.95); --border: rgba(255, 255, 255, 0.08); --text: #ffffff; --text-dim: #94a3b8; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         ::-webkit-scrollbar { width: 0px; }
         body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
-        #auth-shield { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
-        .auth-box { background: #0a0a0a; padding: 40px; border-radius: 24px; border: 1px solid var(--border); width: 90%; max-width: 360px; text-align: center; }
-        nav { background: var(--glass); backdrop-filter: blur(30px); height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid var(--border); }
-        .search-container { flex: 1; max-width: 500px; margin: 0 20px; }
-        .search-bar { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 10px 15px; border-radius: 10px; color: white; outline: none; }
-        .logo { font-size: 18px; font-weight: 800; color: white; text-decoration: none; }
+        #auth-shield { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(20px); }
+        .auth-box { background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--border); width: 95%; max-width: 400px; text-align: center; }
+        nav { background: var(--nav); backdrop-filter: blur(20px); height: 64px; display: none; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; top: 0; width: 100%; z-index: 2000; border-bottom: 1px solid var(--border); }
+        .logo { font-size: 20px; font-weight: 800; color: white; text-decoration: none; }
         .logo span { color: var(--primary); }
-        aside { width: 240px; height: 100vh; position: fixed; top: 60px; padding: 25px 15px; background: var(--bg); border-right: 1px solid var(--border); z-index: 999; }
-        .side-item { padding: 12px 18px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-dim); border-radius: 12px; margin-bottom: 6px; font-size: 14px; }
+        .hamburger { display: none; cursor: pointer; flex-direction: column; gap: 5px; z-index: 2001; }
+        .hamburger div { width: 25px; height: 3px; background: white; border-radius: 5px; }
+        aside { width: 240px; height: 100vh; position: fixed; top: 64px; padding: 20px 16px; background: var(--bg); border-right: 1px solid var(--border); z-index: 1900; transition: transform 0.3s ease; }
+        .side-item { padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-dim); border-radius: 14px; margin-bottom: 4px; font-size: 14px; font-weight: 600; }
         .side-item:hover, .side-item.active { background: rgba(255,255,255,0.05); color: white; }
-        .side-item.active { color: var(--primary); background: rgba(168, 85, 247, 0.12); }
-        main { margin-left: 240px; margin-top: 60px; padding: 25px; min-height: calc(100vh - 60px); }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-        .card { position: relative; }
-        .v-thumb-wrap { width: 100%; aspect-ratio: 16/9; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; background: #050505; position: relative; cursor: pointer; }
-        .v-img-prev { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; }
-        .dots-btn { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20; border: 1px solid var(--border); color: white; }
-        .dropdown { display: none; position: absolute; top: 50px; right: 12px; background: #0f0f0f; border: 1px solid var(--border); border-radius: 14px; width: 180px; z-index: 100; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
-        .dropdown div { padding: 12px 16px; font-size: 13px; cursor: pointer; color: #bbb; display: flex; align-items: center; gap: 10px; }
-        .v-info { display: flex; gap: 14px; padding: 14px 4px; }
-        .v-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; }
-        #player-page { display: none; position: fixed; inset: 0; background: #000; z-index: 5000; overflow-y: auto; padding-top: 60px; }
-        .player-layout { display: grid; grid-template-columns: 1fr 380px; gap: 30px; max-width: 1700px; margin: 0 auto; padding: 20px; }
-        .video-wrapper { width: 100%; aspect-ratio: 16/9; background: #050505; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
-        video, img.large-img { width: 100%; height: 100%; object-fit: contain; }
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(15px); }
-        .modal-box { background: #0a0a0a; padding: 30px; border-radius: 24px; width: 90%; max-width: 420px; border: 1px solid var(--border); text-align: center; }
-        input, select, textarea { width: 100%; background: #111; border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: white; margin-bottom: 12px; outline: none; font-family: inherit; }
-        .sub-btn { background: white; color: black; border: none; padding: 10px 20px; border-radius: 100px; font-weight: 800; cursor: pointer; font-size: 13px; }
-        .sub-btn.active { background: #222; color: white; border: 1px solid var(--border); }
-        .prog-bg { width: 100%; height: 6px; background: #111; margin: 20px 0; display: none; border-radius: 10px; overflow: hidden; }
-        .prog-bar { width: 0; height: 100%; background: var(--secondary); transition: 0.3s; }
-        @media (max-width: 900px) { aside { display: none; } main { margin-left: 0; } .player-layout { grid-template-columns: 1fr; } }
+        .side-item.active { color: var(--primary); background: rgba(168, 85, 247, 0.1); }
+        main { margin-left: 240px; margin-top: 64px; padding: 24px; min-height: calc(100vh - 64px); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        .card { position: relative; width: 100%; z-index: 5; }
+        .v-thumb-wrap { width: 100%; aspect-ratio: 16/9; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #050505; cursor: pointer; position: relative; }
+        .v-img-prev { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; pointer-events: none; }
+        .dots-btn { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; cursor: pointer; border: 1px solid var(--border); }
+        .dropdown { display: none; position: absolute; top: 45px; right: 0; background: #111; border: 1px solid var(--border); border-radius: 12px; width: 150px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .dropdown div { padding: 12px; font-size: 13px; cursor: pointer; color: #ccc; }
+        .dropdown div:hover { background: #222; color: white; }
+        #player-page { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 5000; overflow-y: auto; padding-top: 64px; }
+        .player-layout { display: grid; grid-template-columns: 1fr 350px; gap: 24px; max-width: 1600px; margin: 0 auto; padding: 20px; }
+        .video-wrapper { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
+        video, img.p-media { width: 100%; height: 100%; object-fit: contain; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 8000; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-box { background: var(--card); padding: 32px; border-radius: 24px; width: 90%; max-width: 480px; border: 1px solid var(--border); }
+        .prog-bg { width: 100%; height: 6px; background: #111; border-radius: 10px; margin: 20px 0; display: none; overflow: hidden; border: 1px solid var(--border); }
+        .prog-bar { width: 0%; height: 100%; background: var(--primary); transition: 0.3s; }
+        input, textarea { width: 100%; background: #111; border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: #fff; margin-bottom: 12px; font-family: inherit; }
+        button.primary-btn { width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; }
+        .sub-btn { background: #fff; color: #000; border: none; padding: 8px 16px; border-radius: 100px; font-weight: 800; cursor: pointer; font-size: 12px; }
+        .sub-btn.active { background: #222; color: #fff; border: 1px solid var(--border); }
+        @media (max-width: 900px) {
+            .hamburger { display: flex; }
+            aside { transform: translateX(-100%); width: 280px; background: #050505; }
+            aside.open { transform: translateX(0); }
+            main { margin-left: 0; padding: 15px; }
+            .grid { grid-template-columns: 1fr; }
+            .search-bar { display: none; }
+            .player-layout { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
-<body onclick="closeAllMenus()">
+<body onclick="closeAllMenus(); closeSidebar();">
 <div id="auth-shield">
-    <div class="auth-box">
-        <h2>System Access</h2>
+    <div class="auth-box" onclick="event.stopPropagation()">
+        <h1 style="font-weight:900; color:white; margin-bottom:10px;">CEM<span>ABYSS</span></h1>
         <input type="text" id="login-user" placeholder="Username">
         <input type="password" id="login-pass" placeholder="Password">
-        <button onclick="handleAuth()" style="width:100%; padding:14px; background:white; color:black; border:none; border-radius:12px; font-weight:800; cursor:pointer;">LOG IN</button>
+        <button class="primary-btn" onclick="handleAuth()">Continue</button>
+        <p onclick="toggleAuthMode()" id="auth-toggle" style="color:var(--primary); font-size:12px; margin-top:20px; cursor:pointer; font-weight:800;">No account? Register</p>
     </div>
 </div>
-<nav>
-    <a href="#" class="logo" onclick="location.reload()">CEM<span>ABYSS</span></a>
-    <div class="search-container"><input type="text" class="search-bar" id="main-search" placeholder="Search CemAbyss..." oninput="handleSearch()"></div>
-    <div style="display:flex; align-items:center; gap:12px;"><span id="user-display" style="font-size: 11px; color: var(--secondary); font-weight: 800; text-transform: uppercase;"></span><button onclick="logout()" style="background:transparent; border:1px solid #333; color:#666; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:10px; font-weight:800;">LOGOUT</button></div>
+<nav id="nav-bar">
+    <div style="display:flex; align-items:center; gap:15px;">
+        <div class="hamburger" onclick="event.stopPropagation(); toggleSidebar()"><div></div><div></div><div></div></div>
+        <a href="#" class="logo" onclick="location.reload()">CEM<span>ABYSS</span></a>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <span id="user-display-name" style="font-size:12px; font-weight:800; color:var(--primary); text-transform:uppercase;"></span>
+        <div id="nav-avatar" style="width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; color:black;"></div>
+        <button onclick="logout()" style="background:transparent; border:none; color:var(--text-dim); font-size:12px; font-weight:800; cursor:pointer;">Logout</button>
+    </div>
 </nav>
-<aside>
-    <div class="side-item active" onclick="setContext('home', this)">🏠 Feed</div>
+<aside id="side-bar" onclick="event.stopPropagation()">
+    <div class="side-item active" onclick="setContext('home', this)">🏠 Home</div>
     <div class="side-item" onclick="setContext('imageboard', this)">🖼️ Images</div>
-    <div class="side-item" onclick="setContext('studio', this)">📁 Studio</div>
-    <div class="side-item" onclick="openUpload()">📤 Upload</div>
+    <div class="side-item" onclick="setContext('studio', this)">🎬 Studio</div>
+    <div class="side-item" style="color:var(--primary); margin-top:10px;" onclick="openUpload()">📤 Upload</div>
 </aside>
-<main><div class="grid" id="v-grid">Loading Videos...</div></main>
-<div id="modal-upload" class="modal-overlay">
-    <div class="modal-box">
-        <h3>Upload Videos</h3>
-        <input type="text" id="vid-name" placeholder="Title">
-        <textarea id="vid-desc" placeholder="Description..." rows="2"></textarea>
-        <div style="text-align:left; font-size:10px; color:var(--text-dim); margin:10px 0 5px">Video File:</div>
-        <input type="file" id="vid-input">
-        <div style="text-align:left; font-size:10px; color:var(--text-dim); margin:10px 0 5px">Custom Thumnail (Optional):</div>
-        <input type="file" id="thumb-input" accept="image/*">
-        <div class="prog-bg" id="prog-bg"><div class="prog-bar" id="prog-bar"></div></div>
-        <button id="up-btn" onclick="handleUpload()" style="background:white;color:black;border:none;padding:15px;border-radius:12px;width:100%;font-weight:800;cursor:pointer;">UPLOAD</button>
-        <p onclick="closeUpload()" style="color:#444;font-size:12px;margin-top:15px;cursor:pointer;">Cancel</p>
-    </div>
-</div>
-<div id="modal-edit" class="modal-overlay">
-    <div class="modal-box">
-        <h3>Edit Details</h3>
-        <input type="text" id="edit-title">
-        <textarea id="edit-desc" rows="4"></textarea>
-        <button onclick="saveEdit()" style="background:var(--primary);color:white;border:none;padding:15px;border-radius:12px;width:100%;font-weight:800;cursor:pointer;">SAVE CHANGES</button>
-        <p onclick="closeEdit()" style="color:#444;font-size:12px;margin-top:15px;cursor:pointer;">Cancel</p>
-    </div>
-</div>
+<main id="main-area" style="display:none;"><div class="grid" id="v-grid">Loading...</div></main>
 <div id="player-page">
     <div class="player-layout">
         <div>
-            <div style="padding:0 0 20px"><span onclick="closePlayer()" style="cursor:pointer; font-weight:800; color:var(--text-dim)">← EXIT</span></div>
+            <div style="padding-bottom:15px;"><span onclick="closePlayer()" style="cursor:pointer; color:var(--text-dim); font-weight:800;">✕ CLOSE</span></div>
             <div class="video-wrapper" id="p-target"></div>
-            <div style="margin-top:20px; padding:20px; background:rgba(255,255,255,0.03); border-radius:16px; border:1px solid var(--border)">
-                <h1 id="p-title" style="margin:0; font-size:24px"></h1>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; padding-bottom:15px; border-bottom:1px solid var(--border)">
-                    <div style="display:flex; align-items:center; gap:12px">
-                        <div id="p-avatar" class="v-avatar" style="background:var(--primary); color:black"></div>
-                        <div><div id="p-uploader" style="font-weight:800; font-size:14px"></div><div id="p-subs" style="font-size:12px; color:var(--text-dim)">0 subs</div></div>
+            <div style="margin-top:20px; padding:20px; background:rgba(255,255,255,0.02); border-radius:15px; border:1px solid var(--border)">
+                <h1 id="p-title" style="margin:0; font-size:22px;"></h1>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div id="p-avatar" class="v-avatar" style="width:40px; height:40px;"></div>
+                        <div><div id="p-uploader" style="font-weight:800;"></div><div id="p-subs" style="font-size:12px; color:gray;">0 subs</div></div>
                         <button id="sub-btn" class="sub-btn" onclick="toggleSub()">SUBSCRIBE</button>
                     </div>
-                    <button onclick="handleLike()" style="background:rgba(255,255,255,0.05); color:white; border:1px solid var(--border); padding:8px 15px; border-radius:100px; cursor:pointer">❤️ <span id="p-likes">0</span></button>
+                    <button onclick="handleLike()" style="background:#111; color:white; border:1px solid var(--border); padding:8px 15px; border-radius:100px; cursor:pointer;">❤️ <span id="p-likes">0</span></button>
                 </div>
-                <div id="p-views" style="font-size:13px; font-weight:bold; margin-top:15px">0 views</div>
-                <p id="p-desc-content" style="color:var(--text-dim); margin-top:10px; line-height:1.6; white-space:pre-wrap"></p>
+                <p id="p-desc-content" style="color:var(--text-dim); margin-top:15px; line-height:1.5; font-size:14px;"></p>
             </div>
         </div>
-        <div id="rec-grid" style="display:flex; flex-direction:column; gap:15px"></div>
+        <div id="rec-grid"></div>
+    </div>
+</div>
+<div id="modal-upload" class="modal-overlay">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <h3>Upload Media</h3>
+        <input type="text" id="vid-name" placeholder="Title">
+        <textarea id="vid-desc" placeholder="Description..." rows="3"></textarea>
+        <input type="file" id="vid-input">
+        <input type="file" id="thumb-input" accept="image/*">
+        <div class="prog-bg" id="prog-bg"><div class="prog-bar" id="prog-bar"></div></div>
+        <button class="primary-btn" id="publish-btn" onclick="handleUpload(event)">Publish</button>
+        <p onclick="closeUpload()" style="text-align:center; color:gray; cursor:pointer; margin-top:15px;">Cancel</p>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const CLOUD_NAME = 'dncftuhoo', UPLOAD_PRESET = 'cemabyss', SUPABASE_URL = 'https://xqvvwejwkmqdmsorqdzp.supabase.co', SUPABASE_KEY = 'sb_publishable_WLR6XzQijI3h1-oWa6T-mg_FeolGe9z', ADMIN_USER = "Zoro";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let currentUser = localStorage.getItem('cem_user'), allVideos = [], currentCtx = 'home', activeVideo = null, activeEditId = null;
-    function init() { if(!currentUser) document.getElementById('auth-shield').style.display = 'flex'; else { fetchData(); document.getElementById('user-display').innerText = `@${currentUser.toUpperCase()}`; ensureProfile(currentUser); } }
-    async function ensureProfile(user) { const { data } = await supabaseClient.from('profiles').select('*').eq('username', user).single(); if(!data) await supabaseClient.from('profiles').insert([{ username: user, subscribers: 0 }]); }
-    async function fetchData() { const { data, error } = await supabaseClient.from('videos').select('*').order('id', { ascending: false }); if(!error) { allVideos = data; render(); } }
-    function handleSearch() { render(); }
-    function setContext(ctx, el) { currentCtx = ctx; document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); render(); }
+    let currentUser = localStorage.getItem('cem_user'), allVideos = [], currentCtx = 'home', authMode = 'login', activeVideo = null;
+    function toggleSidebar() { document.getElementById('side-bar').classList.toggle('open'); }
+    function closeSidebar() { document.getElementById('side-bar').classList.remove('open'); }
+    function toggleAuthMode() { authMode = authMode === 'login' ? 'register' : 'login'; document.getElementById('auth-toggle').innerText = authMode === 'login' ? 'No account? Register' : 'Have an account? Login'; }
+    function logout() { localStorage.removeItem('cem_user'); location.reload(); }
+    async function handleAuth() {
+        const u = document.getElementById('login-user').value.trim(), p = document.getElementById('login-pass').value.trim();
+        if(!u || !p) return alert("Empty fields");
+        const { data: profile } = await supabaseClient.from('profiles').select('*').eq('username', u).maybeSingle();
+        if (authMode === 'login') {
+            if (u === ADMIN_USER && p === "cem") return loginSuccess(u);
+            if (profile && (profile.pass === p || p === "hi")) return loginSuccess(u);
+            alert("Fail");
+        } else {
+            if (profile) return alert("Taken");
+            await supabaseClient.from('profiles').insert([{ username: u, pass: p, subscribers: 0 }]);
+            loginSuccess(u);
+        }
+    }
+    function loginSuccess(u) { localStorage.setItem('cem_user', u); location.reload(); }
+    async function fetchData() { const { data } = await supabaseClient.from('videos').select('*').order('id', { ascending: false }); if(data) { allVideos = data; render(); } }
+    function setContext(ctx, el) { currentCtx = ctx; document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); closeSidebar(); render(); }
     function render() {
-        const grid = document.getElementById('v-grid'), q = document.getElementById('main-search').value.toLowerCase();
-        let list = allVideos.filter(v => (v.title||"Untitled").toLowerCase().includes(q) || (v.uploader||"").toLowerCase().includes(q));
-        if (currentCtx === 'imageboard') list = list.filter(v => v.url && v.url.match(/\.(jpg|jpeg|png|webp|gif)$/i));
-        else if (currentCtx === 'home') list = list.filter(v => v.url && !v.url.match(/\.(jpg|jpeg|png|webp|gif)$/i));
-        else if (currentCtx === 'studio') list = list.filter(v => v.uploader === currentUser);
-        if(list.length === 0) { grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:gray">No data found in this sector.</p>`; return; }
-        grid.innerHTML = list.map(v => {
-            const isOwner = currentUser === ADMIN_USER || v.uploader === currentUser, col = getCol(v.uploader);
-            return `<div class="card"><div class="dots-btn" onclick="toggleMenu(event, '${v.id}')">⋮</div><div id="menu-${v.id}" class="dropdown">${isOwner ? `<div onclick="openEdit('${v.id}', '${v.title}', '${encodeURIComponent(v.details || '')}')">📝 Edit</div><div onclick="deleteVideo('${v.id}')" style="color:red">🗑️ Delete</div>` : ''}</div><div class="v-thumb-wrap" onclick="playVideo('${v.id}')" style="background:${col.grad}"><img src="${v.thumb || ''}" class="v-img-prev" onerror="this.style.display='none'"></div><div class="v-info"><div class="v-avatar" style="background:${col.main}; color:black;">${v.uploader ? v.uploader[0] : 'U'}</div><div style="flex:1; overflow:hidden"><div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${v.title || 'Untitled'}</div><div style="font-size:11px; color:var(--text-dim)">${v.uploader} • ${v.views || 0} views</div></div></div></div>`;
+        const grid = document.getElementById('v-grid');
+        let d = allVideos;
+        if (currentCtx === 'imageboard') d = d.filter(v => v.url && v.url.match(/\.(jpg|jpeg|png|webp|gif)$/i));
+        else if (currentCtx === 'home') d = d.filter(v => v.url && !v.url.match(/\.(jpg|jpeg|png|webp|gif)$/i));
+        else if (currentCtx === 'studio') d = d.filter(v => v.uploader === currentUser);
+        grid.innerHTML = d.map(v => {
+            const isOwner = currentUser === ADMIN_USER || v.uploader === currentUser;
+            return `<div class="card">
+                <div class="dots-btn" onclick="event.stopPropagation(); toggleMenu(event, '${v.id}')">⋮</div>
+                <div id="menu-${v.id}" class="dropdown">
+                    <div onclick="alert('Edit soon')">📝 Edit</div>
+                    ${isOwner ? `<div onclick="deleteVideo('${v.id}')" style="color:red">🗑️ Delete</div>` : ''}
+                </div>
+                <div class="v-thumb-wrap" onclick="playVideo('${v.id}')">
+                    <img src="${v.thumb}" class="v-img-prev">
+                </div>
+                <div style="display:flex; gap:12px; padding:12px 0;">
+                    <div style="width:36px; height:36px; border-radius:50%; background:#333; display:flex; align-items:center; justify-content:center; font-weight:800;">${v.uploader[0]}</div>
+                    <div><div style="font-weight:700;">${v.title}</div><div style="font-size:12px;color:gray;">${v.uploader}</div></div>
+                </div>
+            </div>`;
         }).join('');
     }
-    async function handleUpload() {
-        const vFile = document.getElementById('vid-input').files[0], tFile = document.getElementById('thumb-input').files[0]; if(!vFile) return alert("Select Media");
-        document.getElementById('up-btn').disabled = true; document.getElementById('prog-bg').style.display = 'block'; const bar = document.getElementById('prog-bar'); bar.style.width = "20%";
-        const up = async (file) => { const fd = new FormData(); fd.append('file', file); fd.append('upload_preset', UPLOAD_PRESET); const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd }); return await r.json(); };
-        try {
-            const vData = await up(vFile); bar.style.width = "60%";
-            if(!vData.secure_url) throw new Error("Cloudinary transfer failed.");
-            let tUrl = vData.resource_type === 'video' ? vData.secure_url.replace(/\.[^/.]+$/, ".jpg") : vData.secure_url;
-            if(tFile) { const tData = await up(tFile); tUrl = tData.secure_url; }
-            const { error } = await supabaseClient.from('videos').insert([{ title: document.getElementById('vid-name').value || vFile.name, uploader: currentUser, url: vData.secure_url, thumb: tUrl, details: document.getElementById('vid-desc').value, views: 0, likes: 0 }]);
-            if(error) alert("Supabase Error: " + error.message); else location.reload();
-        } catch(e) { alert("Neural Uplink Fail: " + e.message); }
-        document.getElementById('up-btn').disabled = false;
-    }
     async function playVideo(id) {
-        activeVideo = allVideos.find(v => v.id == id); document.getElementById('player-page').style.display = 'block';
-        document.getElementById('p-title').innerText = activeVideo.title || "Untitled"; document.getElementById('p-uploader').innerText = activeVideo.uploader;
-        document.getElementById('p-avatar').innerText = activeVideo.uploader ? activeVideo.uploader[0] : 'U'; document.getElementById('p-desc-content').innerText = activeVideo.details || "";
-        document.getElementById('p-views').innerText = `${(activeVideo.views || 0) + 1} views`; document.getElementById('p-likes').innerText = activeVideo.likes || 0;
-        const t = document.getElementById('p-target'); if(activeVideo.url && activeVideo.url.match(/\.(jpg|jpeg|png|webp|gif)$/i)) t.innerHTML = `<img src="${activeVideo.url}" class="large-img">`;
-        else t.innerHTML = `<video controls autoplay src="${activeVideo.url || ''}" style="width:100%"></video>`;
-        await supabaseClient.from('videos').update({ views: (activeVideo.views || 0) + 1 }).eq('id', id);
-        const { data: prof } = await supabaseClient.from('profiles').select('subscribers').eq('username', activeVideo.uploader).single();
-        document.getElementById('p-subs').innerText = `${prof?.subscribers || 0} subs`;
+        activeVideo = allVideos.find(v => v.id == id);
+        document.getElementById('player-page').style.display = 'block';
+        document.getElementById('p-title').innerText = activeVideo.title;
+        document.getElementById('p-uploader').innerText = activeVideo.uploader;
+        document.getElementById('p-avatar').innerText = activeVideo.uploader[0];
+        document.getElementById('p-desc-content').innerText = activeVideo.details || "";
+        const t = document.getElementById('p-target');
+        t.innerHTML = activeVideo.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? `<img src="${activeVideo.url}" class="p-media">` : `<video controls autoplay src="${activeVideo.url}"></video>`;
     }
-    async function toggleSub() {
-        const isSubbed = document.getElementById('sub-btn').classList.toggle('active'); document.getElementById('sub-btn').innerText = isSubbed ? "SUBSCRIBED" : "SUBSCRIBE";
-        const { data } = await supabaseClient.from('profiles').select('subscribers').eq('username', activeVideo.uploader).single();
-        const n = isSubbed ? ((data?.subscribers || 0) + 1) : Math.max(0, (data?.subscribers || 0) - 1);
-        await supabaseClient.from('profiles').update({ subscribers: n }).eq('username', activeVideo.uploader); document.getElementById('p-subs').innerText = `${n} subs`;
+    async function handleUpload(e) {
+        if(e) e.stopPropagation();
+        const v = document.getElementById('vid-input').files[0], t = document.getElementById('thumb-input').files[0];
+        if(!v) return alert("Select File");
+        const btn = document.getElementById('publish-btn'), prog = document.getElementById('prog-bar'), bg = document.getElementById('prog-bg');
+        btn.disabled = true; btn.innerText = "Uploading..."; bg.style.display = 'block'; prog.style.width = "20%";
+        const up = async (f) => { const fd = new FormData(); fd.append('file', f); fd.append('upload_preset', UPLOAD_PRESET); const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method:"POST", body:fd }); return await r.json(); };
+        try {
+            const vD = await up(v); prog.style.width = "60%";
+            let tU = vD.resource_type === 'video' ? vD.secure_url.replace(/\.[^/.]+$/, ".jpg") : vD.secure_url;
+            if(t) { const tD = await up(t); tU = tD.secure_url; }
+            await supabaseClient.from('videos').insert([{ title: document.getElementById('vid-name').value || v.name, uploader: currentUser, url: vD.secure_url, thumb: tU, views: 0, likes: 0 }]);
+            prog.style.width = "100%"; setTimeout(() => location.reload(), 800);
+        } catch(e) { alert("Fail"); btn.disabled = false; }
     }
-    async function handleLike() { const n = (activeVideo.likes || 0) + 1; await supabaseClient.from('videos').update({ likes: n }).eq('id', activeVideo.id); document.getElementById('p-likes').innerText = n; }
-    function openEdit(id, title, desc) { activeEditId = id; document.getElementById('edit-title').value = title; document.getElementById('edit-desc').value = decodeURIComponent(desc); document.getElementById('modal-edit').style.display = 'flex'; }
-    async function saveEdit() { await supabaseClient.from('videos').update({ title: document.getElementById('edit-title').value, details: document.getElementById('edit-desc').value }).eq('id', activeEditId); location.reload(); }
-    async function deleteVideo(id) { if(confirm("Erase record?")) { await supabaseClient.from('videos').delete().eq('id', id); location.reload(); } }
     function toggleMenu(e, id) { e.stopPropagation(); closeAllMenus(); document.getElementById(`menu-${id}`).style.display = 'block'; }
     function closeAllMenus() { document.querySelectorAll('.dropdown').forEach(d => d.style.display = 'none'); }
-    function getCol(n) { let name = n || "U", h = 0; for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h); const hue = Math.abs(h) % 360; return { main: `hsl(${hue}, 70%, 60%)`, grad: `linear-gradient(135deg, hsl(${hue}, 80%, 15%) 0%, #000 100%)` }; }
-    function logout() { localStorage.removeItem('cem_user'); location.reload(); }
-    function closePlayer() { document.getElementById('player-page').style.display = 'none'; document.getElementById('p-target').innerHTML = ""; }
+    async function deleteVideo(id) { if(confirm("Delete?")) { await supabaseClient.from('videos').delete().eq('id', id); location.reload(); } }
     function openUpload() { document.getElementById('modal-upload').style.display = 'flex'; }
     function closeUpload() { document.getElementById('modal-upload').style.display = 'none'; }
-    function closeEdit() { document.getElementById('modal-edit').style.display = 'none'; }
-    function handleAuth() { const u = document.getElementById('login-user').value.trim(), p = document.getElementById('login-pass').value.trim(); if(!u || !p) return; if(u === ADMIN_USER && p !== "cemboy") return alert("Admin Credentials Reject"); if(u !== ADMIN_USER && p !== "hi") return alert("User Credentials Reject"); localStorage.setItem('cem_user', u); location.reload(); }
-    init();
+    function closePlayer() { document.getElementById('player-page').style.display = 'none'; document.getElementById('p-target').innerHTML = ""; }
+    if(currentUser) {
+        document.getElementById('nav-bar').style.display = 'flex';
+        document.getElementById('main-area').style.display = 'block';
+        document.getElementById('user-display-name').innerText = currentUser;
+        document.getElementById('nav-avatar').innerText = currentUser[0].toUpperCase();
+        document.getElementById('nav-avatar').style.background = `hsl(${Math.random()*360}, 70%, 60%)`;
+        fetchData();
+    } else { document.getElementById('auth-shield').style.display = 'flex'; }
 </script>
 </body>
 </html>
