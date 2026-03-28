@@ -84,18 +84,17 @@ async function handleAuth() {
 
         let emailToUse = regE;
         if (!emailToUse) {
-            // Clean username for direct email usage (remove spaces/special chars)
             const cleanU = u.toLowerCase().replace(/[^a-z0-9]/g, '');
             emailToUse = `${cleanU}@cemabyss.com`;
         } else {
-            // Basic format check if email was provided
             if (!emailToUse.includes('@') || !emailToUse.includes('.')) {
                 return alert("The email you provided is not formatted correctly! (e.g. name@example.com)");
             }
         }
         emailToUse = emailToUse.toLowerCase();
 
-        if (localStorage.getItem('cem_registration_ipblock')) {
+        // DEV_USERS can register freely (Reset block for devs)
+        if (localStorage.getItem('cem_reg_block_v2') && !DEV_USERS.includes(u)) {
             return alert("Registration Limit Exceeded: Device IP blocked.");
         }
 
@@ -120,10 +119,10 @@ async function handleAuth() {
         if (data.user && data.user.identities && data.user.identities.length === 0) {
             alert("Email or Username already in use.");
         } else if (data.session) {
-            localStorage.setItem('cem_registration_ipblock', 'true');
+            if (!DEV_USERS.includes(u)) localStorage.setItem('cem_reg_block_v2', 'true');
             loginSuccess(u);
         } else {
-            localStorage.setItem('cem_registration_ipblock', 'true');
+            if (!DEV_USERS.includes(u)) localStorage.setItem('cem_reg_block_v2', 'true');
             alert("Success! If you provided a real email, check it to CONFIRM your account.");
             toggleAuthMode();
         }
@@ -1371,12 +1370,53 @@ function renderAdminLogs() {
     }
 }
 
+let adminTarget = null;
+async function adminSearchUser() {
+    const q = document.getElementById('admin-user-search').value.trim();
+    const p = allProfiles.find(x => x.username.toLowerCase() === q.toLowerCase());
+    if (!p) return alert("User not found.");
+    
+    adminTarget = p;
+    document.getElementById('admin-user-result').style.display = 'block';
+    document.getElementById('admin-user-name').innerText = p.username;
+    document.getElementById('admin-user-status').innerText = p.is_banned ? "STATUS: BANNED" : "STATUS: ACTIVE";
+    document.getElementById('admin-ban-btn').innerText = p.is_banned ? "Unban User" : "Ban User";
+    document.getElementById('admin-user-pfp').style.background = getAvatarStyle(p.username);
+    document.getElementById('admin-user-pfp').innerText = p.username[0];
+}
+
+async function adminToggleBan() {
+    if (!adminTarget) return;
+    const newStatus = !adminTarget.is_banned;
+    await supabaseClient.from('profiles').update({ is_banned: newStatus }).eq('username', adminTarget.username);
+    logAudit('MODERATION', adminTarget.username, newStatus ? "Banned User" : "Unbanned User");
+    fetchData(); alert("User status updated!"); adminSearchUser();
+}
+
+async function adminResetRegBlock() {
+    if (!adminTarget) return;
+    await supabaseClient.from('profiles').update({ has_reset_block: true }).eq('username', adminTarget.username);
+    logAudit('MODERATION', adminTarget.username, "Reset Registration Block");
+    alert(`Reset signal sent to ${adminTarget.username}. Their block will clear next time they visit.`);
+}
+
+async function checkRegistrationReset(p) {
+    if (p && p.has_reset_block) {
+        localStorage.removeItem('cem_reg_block_v2');
+        await supabaseClient.from('profiles').update({ has_reset_block: false }).eq('username', p.username);
+        console.log("Registration block successfully reset by Admin.");
+    }
+}
+
 document.getElementById('nav-bar').style.display = 'flex';
 document.getElementById('main-area').style.display = 'block';
 
 if (currentUser) {
     if (DEV_USERS.includes(currentUser)) document.getElementById('admin-nav-item').style.display = 'flex';
-    fetchData();
+    fetchData().then(() => {
+        const p = allProfiles.find(x => x.username === currentUser);
+        if (p) checkRegistrationReset(p);
+    });
 } else {
     fetchData(); // Guests can still fetch videos
 }
