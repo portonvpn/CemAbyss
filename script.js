@@ -190,6 +190,7 @@ function updateNav() {
 }
 
 function setContext(ctx, el) {
+    if (profileAudio) { profileAudio.pause(); profileAudio = null; }
     currentCtx = ctx; document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
     if (el) el.classList.add('active'); closeSidebar();
     document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
@@ -816,13 +817,65 @@ async function handleUpload() {
 }
 
 function openProfile(user) {
+    if (profileAudio) { profileAudio.pause(); profileAudio = null; }
     currentCtx = 'profile'; document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
     document.getElementById('view-profile').classList.add('active');
+    closeSidebar(); closePlayer();
+
     const p = allProfiles.find(x => x.username === user);
-    document.getElementById('profile-head').innerHTML = `<div class="v-avatar" style="width:80px;height:80px;font-size:30px;margin:0 auto;${getAvatarStyle(user)}">${user ? user[0] : '?'}</div><h2 style="margin:10px 0 5px;display:flex;align-items:center;justify-content:center;gap:8px;">${formatName(user)}</h2><p style="color:gray">${p?.subscribers || 0} subscribers</p>`;
+    if (!p) return;
+
+    // Profile Music
+    if (p.music_url) {
+        profileAudio = new Audio(p.music_url);
+        profileAudio.volume = 0.5;
+        // Handling autoplay restriction - will play on first click if blocked
+        profileAudio.play().catch(() => {
+            document.addEventListener('click', () => { if(profileAudio && profileAudio.paused) profileAudio.play(); }, {once:true});
+        });
+    }
+
+    // Apply Profile Vibe (Glow and Font)
+    const container = document.getElementById('profile-container');
+    const glowColor = p.profile_glow || 'rgba(168, 85, 247, 0.4)';
+    container.style.boxShadow = `0 10px 50px ${glowColor}`;
+    container.style.fontFamily = p.profile_font || 'inherit';
+
+    // Render Banner
+    const banner = document.getElementById('profile-banner');
+    if (p.banner_url) {
+        banner.innerHTML = `<img src="${p.banner_url}" style="width:100%; height:100%; object-fit:cover;">`;
+    } else {
+        banner.innerHTML = `<div style="width:100%; height:100%; background:linear-gradient(45deg, #111, #222);"></div>`;
+    }
+
+    // Render Badges and Socials
+    const bCont = document.getElementById('p-badges');
+    const badges = p.badges ? JSON.parse(p.badges) : [];
+    bCont.innerHTML = badges.map(b => `<span class="badge-item" title="Profile Badge">${b}</span>`).join('');
+
+    const sCont = document.getElementById('p-socials');
+    const socials = p.social_links ? JSON.parse(p.social_links) : {};
+    let sHtml = '';
+    if (socials.discord) sHtml += `<div class="social-icon" title="Discord: ${socials.discord}">👾</div>`;
+    if (socials.twitter) sHtml += `<div class="social-icon" title="Twitter: ${socials.twitter}">🐦</div>`;
+    if (socials.github) sHtml += `<div class="social-icon" title="GitHub: ${socials.github}">📂</div>`;
+    if (socials.yt) sHtml += `<div class="social-icon" title="YouTube: ${socials.yt}">🎥</div>`;
+    sCont.innerHTML = sHtml;
+
+    // Render Head
+    const bdr = p.profile_border || 'border-none';
+    document.getElementById('profile-head').innerHTML = `
+        <div class="v-avatar ${bdr}" style="width:100px; height:100px; font-size:40px; margin: -50px auto 10px; border-radius:50%; position:relative; z-index:2; ${getAvatarStyle(user)}">${user ? user[0] : '?'}</div>
+        <h2 style="margin:0; display:flex; align-items:center; justify-content:center; gap:8px;">${formatName(user)}</h2>
+        <p style="color:gray; margin: 5px 0;">${p.subscribers || 0} subscribers</p>
+        <p style="max-width:600px; margin:15px auto 0; color:var(--text); font-size:14px; line-height:1.6; white-space:pre-wrap;">${p.bio || 'No bio yet.'}</p>
+        <div id="p-badges" style="display:flex; justify-content:center; gap:8px; margin-top: 15px; flex-wrap:wrap; padding: 0 20px;">${bCont.innerHTML}</div>
+        <div id="p-socials" style="display:flex; justify-content:center; gap:20px; margin-top:20px;">${sHtml}</div>
+    `;
+
     render('profile-grid', allVideos.filter(v => v.uploader === user));
-    closePlayer();
 }
 
 function openEdit(id, t, d) {
@@ -1128,9 +1181,86 @@ async function buyTheme(tid, price) {
     }
 }
 
+async function saveBio() {
+    const b = document.getElementById('set-bio').value.trim();
+    await supabaseClient.from('profiles').update({ bio: b }).eq('username', currentUser);
+    fetchData(); alert("Bio Updated!");
+}
+
+async function saveBanner() {
+    const v = document.getElementById('set-banner').files[0]; if (!v) return;
+    const btn = document.getElementById('btn-banner'); btn.innerText = "Uploading..."; btn.disabled = true;
+    const fd = new FormData(); fd.append('file', v); fd.append('upload_preset', UPLOAD_PRESET);
+    try {
+        const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd });
+        const d = await r.json();
+        await supabaseClient.from('profiles').update({ banner_url: d.secure_url }).eq('username', currentUser);
+        fetchData(); alert("Banner Updated!");
+    } catch (e) { alert("Banner Upload Fail"); }
+    btn.innerText = "Upload Banner"; btn.disabled = false; document.getElementById('set-banner').value = '';
+}
+
+async function saveVibe() {
+    const glow = document.getElementById('set-glow').value;
+    const font = document.getElementById('set-font').value;
+    await supabaseClient.from('profiles').update({ profile_glow: glow, profile_font: font }).eq('username', currentUser);
+    fetchData(); alert("Vibe Settings Saved!");
+}
+
+async function saveEliteVibe() {
+    const music = document.getElementById('set-music').value.trim();
+    const border = document.getElementById('set-border').value;
+    const socials = {
+        discord: document.getElementById('set-social-discord').value.trim(),
+        twitter: document.getElementById('set-social-twitter').value.trim(),
+        github: document.getElementById('set-social-github').value.trim(),
+        yt: document.getElementById('set-social-yt').value.trim()
+    };
+    
+    const selectedBadges = [];
+    document.querySelectorAll('.badge-chk:checked').forEach(c => selectedBadges.push(c.value));
+
+    await supabaseClient.from('profiles').update({ 
+        music_url: music, 
+        profile_border: border, 
+        social_links: JSON.stringify(socials),
+        badges: JSON.stringify(selectedBadges)
+    }).eq('username', currentUser);
+    
+    fetchData(); alert("Elite Vibe Updated!");
+}
+
+let profileAudio = null;
+const BADGE_LIST = ["💎","🏆","👑","🔥","⭐","✨","🦄","🎮","🎧","📷","💻","🌍","🚀","🛸","🌌","🗿","🎭","🎨","🍕","🍩","🐉","🦈","👻","💀","👽","🤖","🦾","🌈","☀️","🍀","💎","🔮","🌀","⚡","🩸","🧿","🧸","🛡️","⚔️","🪓","🏹","💰","💎","📀","📼","💾","📡","🔭","🧪","🧬","💊","🧪","🧨","💊","🔮","🧸","💎","👑","🔥","🌌","🪐","🍄","🐲","🦉","🦁","🐯","🐺","🦊","🧊","🌋","🏔️","🏜️","🏖️","🗺️","🧭","⌛","⏳","🧿","🎴","🎭","🎬","🎥","📸","📼","📟","📻","🏮","🎏","🪬","🧿","🪩","💃","🕺","✨","💥","💨","🌀","🔱","☯️","🕉️","☪️","☮️","🕎","🔯","♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓","🪐","🍀","🍄","🌵","🌲","🌴","🌻","🌑","🌪️","🌊","🌩️"];
+
 function renderSettings() {
     const p = allProfiles.find(x => x.username === currentUser);
     if (!p) return;
+
+    if (document.getElementById('set-name') && !document.getElementById('set-name').value) document.getElementById('set-name').value = p.display_name || '';
+    if (document.getElementById('set-bio') && !document.getElementById('set-bio').value) document.getElementById('set-bio').value = p.bio || '';
+    if (document.getElementById('set-glow')) document.getElementById('set-glow').value = p.profile_glow || '#a855f7';
+    if (document.getElementById('set-font')) document.getElementById('set-font').value = p.profile_font || 'inherit';
+    
+    if (document.getElementById('set-music')) document.getElementById('set-music').value = p.music_url || '';
+    if (document.getElementById('set-border')) document.getElementById('set-border').value = p.profile_border || 'border-none';
+    
+    const s = p.social_links ? JSON.parse(p.social_links) : {};
+    if (document.getElementById('set-social-discord')) document.getElementById('set-social-discord').value = s.discord || '';
+    if (document.getElementById('set-social-twitter')) document.getElementById('set-social-twitter').value = s.twitter || '';
+    if (document.getElementById('set-social-github')) document.getElementById('set-social-github').value = s.github || '';
+    if (document.getElementById('set-social-yt')) document.getElementById('set-social-yt').value = s.yt || '';
+
+    const bGrid = document.getElementById('set-badges-grid');
+    if (bGrid && !bGrid.innerHTML) {
+        const ownedBadges = p.badges ? JSON.parse(p.badges) : [];
+        bGrid.innerHTML = BADGE_LIST.map((b, i) => `
+            <div style="display:flex; align-items:center; justify-content:center; position:relative;">
+                <input type="checkbox" class="badge-chk" value="${b}" id="bad-${i}" ${ownedBadges.includes(b) ? 'checked' : ''} style="position:absolute; opacity:0; cursor:pointer; inset:0;">
+                <label for="bad-${i}" style="font-size:24px; cursor:pointer;">${b}</label>
+            </div>
+        `).join('');
+    }
 
     let html = `
         <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default Purple</div>

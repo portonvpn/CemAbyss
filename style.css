@@ -143,3 +143,17 @@ button.primary-btn { width: 100%; padding: 16px; background: var(--primary); col
     #u-coins { font-size: 10px; }
     .v-avatar { width: 32px !important; height: 32px !important; font-size: 14px; }
 }
+
+/* New Profile Customizations */
+.border-none { border: none; }
+.border-rainbow { border: 4px solid transparent; background: linear-gradient(var(--card), var(--card)) padding-box, linear-gradient(45deg,red,orange,yellow,green,blue,purple) border-box; }
+.border-pulse { border: 4px solid var(--primary); box-shadow: 0 0 15px var(--primary); animation: border-pulse-anim 1.5s infinite alternate; }
+@keyframes border-pulse-anim { from { box-shadow: 0 0 5px var(--primary); } to { box-shadow: 0 0 25px var(--primary); } }
+.border-fire { border: 4px solid #ff4500; box-shadow: 0 0 20px #ff4500; animation: border-flicker 0.1s infinite; }
+@keyframes border-flicker { 0% { opacity: 0.8; } 100% { opacity: 1; } }
+.border-glass { border: 2px solid rgba(255,255,255,0.8); box-shadow: inset 0 0 10px white; }
+
+#profile-fx-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.social-icon { font-size: 18px; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
+.social-icon:hover { color: var(--primary); transform: scale(1.2); }
+.badge-item { font-size: 18px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); cursor: help; }
