@@ -349,9 +349,13 @@
                                 style="width:auto; padding:8px 15px; font-size:12px;"
                                 onclick="toggleSub()">SUBSCRIBE</button>
                         </div>
-                        <button id="like-btn" onclick="handleLike()"
-                            style="background:#111; color:white; border:1px solid var(--border); padding:8px 15px; border-radius:100px; cursor:pointer;">❤️
-                            <span id="p-likes">0</span></button>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <button id="like-btn" onclick="handleLike()"
+                                style="background:#111; color:white; border:1px solid var(--border); padding:8px 15px; border-radius:100px; cursor:pointer;">❤️
+                                <span id="p-likes">0</span></button>
+                            <button onclick="shareVideo()"
+                                style="background:#111; color:white; border:1px solid var(--border); padding:8px 15px; border-radius:100px; cursor:pointer;">🔗 Share</button>
+                        </div>
                     </div>
                     <p id="p-desc-content" style="color:var(--text-dim); margin-top:15px; font-size:14px;"></p>
                     <div id="comments-container">

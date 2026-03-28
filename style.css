@@ -5,9 +5,9 @@
 [data-theme="eclipse"] { --primary: #f59e0b; --bg: #0a0500; --card: #140a00; --nav: rgba(10, 5, 0, 0.95); --border: rgba(245, 158, 11, 0.2); }
 [data-theme="abyss"] { --primary: #6366f1; --bg: #05050a; --card: #0a0a14; --nav: rgba(5, 5, 10, 0.95); --border: rgba(99, 102, 241, 0.2); }
 [data-theme="creamy"] { --primary: #d4a373; --bg: #fefae0; --card: #f9e2ba; --nav: rgba(254, 250, 224, 0.95); --border: rgba(212, 163, 115, 0.3); --text: #333333; --text-dim: #6b705c; }
-[data-theme="tropical"] { --primary: #f15bb5; --bg: #032b43; --card: #0e3b5e; --nav: rgba(3, 43, 67, 0.95); --border: rgba(0, 245, 212, 0.5); --text: #ffffff; --text-dim: #94e8db; }
 [data-theme="rainbow"] { --primary: #ff007f; --bg: #1a0b2e; --card: #2d1b4e; --nav: rgba(26, 11, 46, 0.95); --border: rgba(255, 0, 127, 0.4); } 
-[data-theme="glitched"] { --primary: #00ff00; --bg: #000000; --card: #080808; --nav: rgba(0, 0, 0, 0.95); --border: rgba(0, 255, 0, 0.4); }
+[data-theme="hacker"] { --primary: #00ff00; --bg: #000000; --card: #0a0a0a; --nav: rgba(0, 0, 0, 0.95); --border: #003300; --text: #00ff00; --text-dim: #00aa00; }
+[data-theme="bubblegum"] { --primary: #ff8cfa; --bg: #ffe6ff; --card: #ffccff; --nav: rgba(255, 230, 255, 0.95); --border: #ff99ff; --text: #cc00cc; --text-dim: #ff33ff; }
 
 /* Frutiger Aero Theme */
 [data-theme="frutiger"] { --primary: #00a8ff; --bg: transparent; --card: rgba(255, 255, 255, 0.3); --nav: rgba(255, 255, 255, 0.4); --border: rgba(255, 255, 255, 0.6); --text: #050505; --text-dim: #333333; }

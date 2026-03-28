@@ -133,22 +133,63 @@ async function fetchData() {
     checkDailyCoins();
     applyGlobalBanner();
     updateRankCSS();
-    if (currentCtx === 'admin') renderAdmin(); else if (currentCtx !== 'profile' && currentCtx !== 'announcements' && currentCtx !== 'settings') render();
+    if (currentCtx === 'settings') renderSettings();
+    if (currentCtx === 'admin') renderAdmin();
     if (currentCtx === 'marketplace') renderMarketplace();
     if (currentCtx === 'announcements') renderAnnouncements();
-    if (currentCtx === 'settings') renderSettings();
+    if (currentCtx === 'home') render('v-grid', null);
     updateNav();
+
+    // Initial routing logic
+    if(!window.routingHandled) {
+        const hash = window.location.hash.slice(1);
+        if(hash.startsWith('video/')) {
+            const vidId = hash.split('/')[1];
+            playVideo(vidId);
+        } else if(hash) {
+            setContext(hash, null, true);
+        }
+        window.routingHandled = true;
+    }
 }
+
+window.onpopstate = (e) => {
+    if(e.state && e.state.ctx) {
+        if(e.state.ctx === 'video' && e.state.id) {
+            playVideo(e.state.id);
+        } else {
+            closePlayer();
+            setContext(e.state.ctx, null, true);
+        }
+    } else {
+        closePlayer();
+        setContext('home', null, true);
+    }
+};
 
 function updateNav() {
     document.getElementById('u-name-display').innerHTML = formatName(currentUser);
     const av = document.getElementById('nav-avatar'); av.setAttribute('style', getAvatarStyle(currentUser)); av.innerText = currentUser ? currentUser[0].toUpperCase() : '?';
 }
 
-function setContext(ctx, el) {
-    currentCtx = ctx; document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
+function setContext(ctx, el, skipPush = false) {
+    currentCtx = ctx; 
+    document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
     if (el) el.classList.add('active'); closeSidebar();
     document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+    
+    // Update active state based on ctx if no element provided
+    if(!el) {
+        document.querySelectorAll('.side-item').forEach(i => {
+           if(i.getAttribute('onclick').includes(ctx)) i.classList.add('active');
+        });
+    }
+
+    if (!skipPush && window.location.protocol !== 'file:') {
+        const url = ctx === 'home' ? '#/home' : `#${ctx}`;
+        history.pushState({ ctx }, '', url);
+    }
+
     if (ctx === 'settings') {
         document.getElementById('view-settings').classList.add('active'); renderSettings();
     } else if (ctx === 'admin') {
@@ -158,7 +199,8 @@ function setContext(ctx, el) {
     } else if (ctx === 'announcements') {
         document.getElementById('view-announcements').classList.add('active'); renderAnnouncements();
     } else {
-        document.getElementById('view-home').classList.add('active'); render();
+        document.getElementById('view-home').classList.add('active');
+        render('v-grid', null);
     }
 }
 
@@ -256,22 +298,37 @@ function handleSearch() {
 }
 
 function updateRankCSS() {
-    let css = `@keyframes rankBGMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } } \n`;
+    let css = `
+        @keyframes rankBGMove { 
+            0% { background-position: 0% 50%; filter: drop-shadow(0 0 var(--glow-size, 0px) var(--glow-color, transparent)) hue-rotate(0deg); } 
+            50% { background-position: 100% 50%; filter: drop-shadow(0 0 var(--glow-size, 0px) var(--glow-color, transparent)) hue-rotate(180deg); } 
+            100% { background-position: 0% 50%; filter: drop-shadow(0 0 var(--glow-size, 0px) var(--glow-color, transparent)) hue-rotate(360deg); } 
+        }
+        @keyframes rankBadgeMove {
+            0% { background-position: 0% 50%; filter: hue-rotate(0deg); }
+            50% { background-position: 100% 50%; filter: hue-rotate(180deg); }
+            100% { background-position: 0% 50%; filter: hue-rotate(360deg); }
+        }
+    `;
     allRanks.forEach(rank => {
         const d = rank.data;
         css += `.rank-name-${rank.id} {
             font-weight: 800;
+            display: inline-block; padding: 15px; margin: -15px; z-index: 1; position: relative;
+            --glow-color: ${d.nameGlow || 'transparent'};
+            --glow-size: ${d.nameGlowSize || 0}px;
             ${d.nameColor ? (d.nameColor.includes('gradient') ? `background: ${d.nameColor}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: transparent;` : `color: ${d.nameColor};`) : ''}
-            ${d.nameGlow ? `filter: drop-shadow(0 0 ${d.nameGlowSize || 5}px ${d.nameGlow});` : ''}
-            ${d.nameMoving ? `background-size: 200% 200%; animation: rankBGMove 3s ease infinite;` : ''}
+            ${d.nameGlow ? `filter: drop-shadow(0 0 var(--glow-size) var(--glow-color));` : ''}
+            ${d.nameMoving ? `background-size: 200% 200%; animation: rankBGMove 3s linear infinite;` : ''}
         }\n`;
         css += `.rank-badge-${rank.id} {
             padding: 2px 6px; font-size: 10px; font-weight: 800; margin-left: 6px; display: inline-block;
+            position: relative; z-index: 10;
             background: ${d.badgeBg || 'transparent'};
             color: ${d.badgeTextColor || 'white'};
             border-radius: ${d.badgeBorderRadius || 0}px;
             box-shadow: 0 0 ${d.badgeGlowSize || 0}px ${d.badgeGlow || 'transparent'};
-            ${(d.badgeBg && d.badgeBg.includes('gradient') && d.nameMoving) ? `background-size: 200% 200%; animation: rankBGMove 3s ease infinite;` : ''}
+            ${d.nameMoving ? `background-size: 200% 200%; animation: rankBadgeMove 3s linear infinite;` : ''}
         }\n`;
     });
     let s = document.getElementById('dynamic-ranks');
@@ -549,50 +606,51 @@ async function deleteAccount(u) {
 }
 
 async function playVideo(id) {
-    activeVideo = allVideos.find(v => v.id == id); document.getElementById('player-page').style.display = 'block';
-    const p = allProfiles.find(x => x.username === activeVideo.uploader);
-    document.getElementById('p-title').innerText = activeVideo.title;
-    document.getElementById('p-uploader').innerHTML = formatName(activeVideo.uploader);
-    document.getElementById('p-uploader').onclick = () => openProfile(activeVideo.uploader);
-    document.getElementById('p-avatar').setAttribute('style', `width:40px; height:40px; ${getAvatarStyle(activeVideo.uploader)}`);
-    document.getElementById('p-avatar').innerText = activeVideo.uploader[0];
-    document.getElementById('p-avatar').onclick = () => openProfile(activeVideo.uploader);
-    document.getElementById('p-subs').innerText = `${p?.subscribers || 0} subscribers`;
+    const v = allVideos.find(x => x.id === id);
+    if (!v) return;
+    activeVideo = v; 
+    document.getElementById('player-page').style.display = 'block';
 
-    let localLikes = JSON.parse(localStorage.getItem(`cem_likes_${currentUser}`) || '[]');
-    let localSubs = JSON.parse(localStorage.getItem(`cem_subs_${currentUser}`) || '[]');
+    const pTar = document.getElementById('p-target');
+    const isVid = v.file && (v.file.endsWith('.mp4') || v.file.endsWith('.webm') || v.file.endsWith('.mov'));
+    if (isVid) pTar.innerHTML = `<video controls autoplay style="width:100%; height:100%; object-fit:contain;"><source src="${v.file}" type="video/mp4"></video>`;
+    else pTar.innerHTML = `<img src="${v.file}" style="width:100%; height:100%; object-fit:contain; border-radius:12px;">`;
 
-    const likeBtn = document.getElementById('like-btn');
-    if (likeBtn) {
-        if (localLikes.includes(activeVideo.id)) {
-            likeBtn.style.background = 'var(--primary)';
-            likeBtn.innerHTML = `👍 Liked (<span id="p-likes">${activeVideo.likes || 0}</span>)`;
-        } else {
-            likeBtn.style.background = 'rgba(255,255,255,0.1)';
-            likeBtn.innerHTML = `👍 <span id="p-likes">${activeVideo.likes || 0}</span>`;
-        }
-    } else {
-        const pLikes = document.getElementById('p-likes');
-        if (pLikes) pLikes.innerText = activeVideo.likes || 0;
-    }
+    document.getElementById('p-title').innerText = v.title;
+    document.getElementById('p-desc-content').innerText = v.details || "";
+    document.getElementById('p-likes').innerText = (v.likes || []).length;
+    
+    const up = allProfiles.find(u => u.username === v.uploader);
+    document.getElementById('p-uploader').innerHTML = formatName(v.uploader);
+    document.getElementById('p-avatar').style = getAvatarStyle(v.uploader);
+    document.getElementById('p-subs').innerText = `${(up?.subscribers || []).length} subscribers`;
 
     const subBtn = document.getElementById('sub-btn');
-    if (subBtn) {
-        if (localSubs.includes(activeVideo.uploader)) {
-            subBtn.classList.add('active');
-            subBtn.innerText = 'SUBSCRIBED';
-        } else {
-            subBtn.classList.remove('active');
-            subBtn.innerText = 'SUBSCRIBE';
-        }
+    if (currentUser && up?.subscribers?.includes(currentUser)) {
+        subBtn.innerText = "SUBSCRIBED"; subBtn.style.background = "#222";
+    } else {
+        subBtn.innerText = "SUBSCRIBE"; subBtn.style.background = "var(--primary)";
     }
 
-    document.getElementById('p-desc-content').innerText = activeVideo.details || "";
-    const t = document.getElementById('p-target');
-    t.innerHTML = activeVideo.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? `<img src="${activeVideo.url}" class="p-media">` : `<video controls autoplay src="${activeVideo.url}"></video>`;
-    await supabaseClient.from('videos').update({ views: (activeVideo.views || 0) + 1 }).eq('id', id);
-    renderRecs(); loadComments();
+    const likeBtn = document.getElementById('like-btn');
+    if (currentUser && v.likes?.includes(currentUser)) likeBtn.style.background = "var(--primary)";
+    else likeBtn.style.background = "#111";
+
+    if (window.location.protocol !== 'file:') {
+        history.pushState({ ctx: 'video', id }, '', `#video/${id}`);
+    }
+    loadComments();
+    renderRecs();
 }
+
+function shareVideo() {
+    if(!activeVideo) return;
+    const url = `${window.location.origin}${window.location.pathname}#video/${activeVideo.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+        alert("Video link copied to clipboard! 🔗");
+    });
+}
+
 
 function renderRecs() {
     const rG = document.getElementById('rec-grid');
@@ -804,7 +862,14 @@ async function deleteVideo(id) { if (confirm("Delete?")) { await supabaseClient.
 function openUpload() { document.getElementById('modal-upload').style.display = 'flex'; }
 function closeUpload() { document.getElementById('modal-upload').style.display = 'none'; }
 function closeEdit() { document.getElementById('modal-edit').style.display = 'none'; }
-function closePlayer() { document.getElementById('player-page').style.display = 'none'; document.getElementById('p-target').innerHTML = ""; }
+function closePlayer() { 
+    document.getElementById('player-page').style.display = 'none'; 
+    document.getElementById('p-target').innerHTML = ""; 
+    const url = currentCtx === 'home' ? '#/home' : `#${currentCtx}`;
+    if (window.location.protocol !== 'file:') {
+        history.pushState({ ctx: currentCtx }, '', url);
+    }
+}
 
 async function pinVideo(id) {
     if (!confirm("Pin this video to the top of the Home page globally?")) return;
@@ -1002,16 +1067,22 @@ async function deleteAnnouncement(id) {
 
 const MARKET_THEMES = [
     { id: 'creamy', name: 'Creamy Gold', price: 1000, color: '#d4a373' },
-    { id: 'tropical', name: 'Animated Tropical', price: 2500, color: 'linear-gradient(135deg, #f15bb5, #fee440)' },
-    { id: 'rainbow', name: 'Animated Rainbow', price: 5000, color: 'linear-gradient(45deg,red,orange,yellow,green,blue,purple)' },
-    { id: 'glitched', name: 'Glitched Hacker', price: 7500, color: '#00ff00' },
-    { id: 'frutiger', name: 'Frutiger Aero', price: 10000, color: 'linear-gradient(to bottom, #00a8ff, #005f99)' }
+    { id: 'hacker', name: 'Terminal Hacker', price: 3000, color: '#00ff00' },
+    { id: 'rainbow', name: 'Animated Rainbow', price: 6000, color: 'linear-gradient(45deg,red,orange,yellow,green,blue,purple)' },
+    { id: 'bubblegum', name: 'Bubblegum Pop', price: 9500, color: '#ff8cfa' },
+    { id: 'frutiger', name: 'Frutiger Aero (Windows 7)', price: 10000, color: 'linear-gradient(to bottom, #00a8ff, #005f99)' }
 ];
 
 function renderMarketplace() {
     const p = allProfiles.find(x => x.username === currentUser);
     if (!p) return;
-    const unlocked = p.unlocked_themes || [];
+    
+    let unlocked = [];
+    if (p.unlocked_themes) {
+        if (typeof p.unlocked_themes === 'string') unlocked = JSON.parse(p.unlocked_themes);
+        else unlocked = p.unlocked_themes;
+    }
+
     let html = '';
     MARKET_THEMES.forEach(t => {
         const isOwned = unlocked.includes(t.id);
@@ -1024,21 +1095,6 @@ function renderMarketplace() {
         </div>`;
     });
     document.getElementById('market-grid').innerHTML = html;
-
-    let setHtml = `
-      <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default</div>
-      <div class="theme-btn" style="background:#e11d48" onclick="setTheme('midnight-red')">Midnight Red</div>
-      <div class="theme-btn" style="background:#0ea5e9" onclick="setTheme('ocean')">Ocean Blue</div>
-      <div class="theme-btn" style="background:#10b981" onclick="setTheme('forest')">Forest Green</div>
-      <div class="theme-btn" style="background:#f59e0b" onclick="setTheme('eclipse')">Eclipse Orange</div>
-      <div class="theme-btn" style="background:#6366f1" onclick="setTheme('abyss')">Deep Abyss</div>
-    `;
-    MARKET_THEMES.forEach(t => {
-        if (unlocked.includes(t.id)) {
-            setHtml += `<div class="theme-btn" style="background:${t.color}" onclick="setTheme('${t.id}')">${t.name}</div>`;
-        }
-    });
-    document.getElementById('my-themes-grid').innerHTML = setHtml;
 }
 
 async function buyTheme(tid, price) {
@@ -1066,7 +1122,6 @@ async function buyTheme(tid, price) {
 
     if (!error) {
         logAudit('PURCHASE_THEME', currentUser, `Bought ${t.id} for ${t.price} coins`);
-        alert(`Successfully purchased ${t.name}! You can equip it in the Settings Tab.`);
         setTheme(t.id);
         fetchData();
     } else {
@@ -1094,7 +1149,7 @@ function renderSettings() {
     }
 
     MARKET_THEMES.forEach(t => {
-        if (myThemes.includes(t.id) || DEV_USERS.includes(currentUser)) {
+        if (myThemes.includes(t.id)) {
             if (t.id === 'frutiger') {
                 html += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold; color:#000" onclick="setTheme('${t.id}'); document.getElementById('modal-frutiger').style.display='flex'">★ ${t.name}</div>`;
             } else {
