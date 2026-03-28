@@ -13,18 +13,24 @@ function closeSidebar() {
 }
 function logout() { supabaseClient.auth.signOut().then(() => { localStorage.removeItem('cem_user'); location.reload(); }); }
 
+function openAuth() { document.getElementById('auth-shield').style.display = 'flex'; }
+function closeAuth() { document.getElementById('auth-shield').style.display = 'none'; }
+
 function toggleAuthMode() {
     authMode = authMode === 'login' ? 'register' : 'login';
     document.getElementById('auth-title').innerText = authMode === 'login' ? 'Login' : 'Register';
     document.getElementById('auth-toggle').innerText = authMode === 'login' ? 'No account? Register' : 'Have an account? Login';
     document.getElementById('login-user').style.display = authMode === 'login' ? 'none' : 'block';
+    document.getElementById('reg-email').style.display = authMode === 'login' ? 'none' : 'block';
+    document.getElementById('login-email').placeholder = authMode === 'login' ? 'Email or Username' : 'Email (Optional)';
+    if (authMode === 'register') document.getElementById('login-email').style.display = 'none';
+    else document.getElementById('login-email').style.display = 'block';
 }
 
 function showResetPassword() {
     document.getElementById('auth-form-container').style.display = 'none';
     document.getElementById('reset-form-container').style.display = 'block';
 }
-
 function hideResetPassword() {
     document.getElementById('reset-form-container').style.display = 'none';
     document.getElementById('auth-form-container').style.display = 'block';
@@ -68,45 +74,65 @@ function formatName(u) {
 }
 
 async function handleAuth() {
-    const e = document.getElementById('login-email').value.trim();
+    let inputEmail = document.getElementById('login-email').value.trim();
     const p = document.getElementById('login-pass').value.trim();
     const u = document.getElementById('login-user').value.trim();
-
-    if (!e || !p) return alert("Email & Password required");
+    const regE = document.getElementById('reg-email').value.trim();
 
     if (authMode === 'register') {
-        if (!u) return alert("Please choose a username");
+        if (!u || !p) return alert("Username & Password required");
+
+        let emailToUse = regE;
+        if (!emailToUse) emailToUse = `${u}@cemabyss.local`;
 
         if (localStorage.getItem('cem_registration_ipblock')) {
-            return alert("Registration Limit Exceeded: Device IP blocked. You already made an account.");
+            return alert("Registration Limit Exceeded: Device IP blocked.");
         }
 
         const { data: taken } = await supabaseClient.from('profiles').select('username').eq('username', u).maybeSingle();
         if (taken) return alert("Username already taken!");
 
         const { data, error } = await supabaseClient.auth.signUp({
-            email: e,
+            email: emailToUse,
             password: p,
             options: { data: { username: u } }
         });
 
         if (error) return alert(error.message);
 
-        await supabaseClient.from('profiles').insert([{ username: u, is_banned: false, subscribers: 0 }]);
+        await supabaseClient.from('profiles').insert([{ 
+            username: u, 
+            is_banned: false, 
+            subscribers: 0, 
+            email_lookup: emailToUse.toLowerCase() 
+        }]);
 
         if (data.user && data.user.identities && data.user.identities.length === 0) {
-            alert("Email already in use.");
+            alert("Email or Username already in use.");
         } else if (data.session) {
             localStorage.setItem('cem_registration_ipblock', 'true');
             loginSuccess(u);
         } else {
             localStorage.setItem('cem_registration_ipblock', 'true');
-            alert("Success! Check your email to CONFIRM your account before logging in.");
+            alert("Success! If you provided a real email, check it to CONFIRM your account.");
             toggleAuthMode();
         }
     } else {
+        if (!inputEmail || !p) return alert("Email/Username & Password required");
+
+        let emailToSignIn = inputEmail;
+        if (!inputEmail.includes('@')) {
+            const { data: prof } = await supabaseClient.from('profiles').select('email_lookup').eq('username', inputEmail).maybeSingle();
+            if (prof && prof.email_lookup) {
+                emailToSignIn = prof.email_lookup;
+            } else {
+                // Fallback for legacy users without email_lookup column populated
+                emailToSignIn = `${inputEmail}@cemabyss.local`;
+            }
+        }
+
         const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: e,
+            email: emailToSignIn,
             password: p
         });
 
@@ -114,8 +140,12 @@ async function handleAuth() {
 
         if (data.user) {
             const uname = data.user.user_metadata.username;
-            if (uname) loginSuccess(uname);
-            else alert("Account has no assigned username. You may be a legacy user without email.");
+            if (uname) {
+                // Update email_lookup for legacy users
+                await supabaseClient.from('profiles').update({ email_lookup: data.user.email }).eq('username', uname);
+                loginSuccess(uname);
+            }
+            else alert("Account has no assigned username.");
         }
     }
 }
@@ -141,8 +171,17 @@ async function fetchData() {
 }
 
 function updateNav() {
-    document.getElementById('u-name-display').innerHTML = formatName(currentUser);
-    const av = document.getElementById('nav-avatar'); av.setAttribute('style', getAvatarStyle(currentUser)); av.innerText = currentUser ? currentUser[0].toUpperCase() : '?';
+    if (currentUser) {
+        document.getElementById('nav-user-area').style.display = 'flex';
+        document.getElementById('nav-login-btn').style.display = 'none';
+        document.getElementById('u-name-display').innerHTML = formatName(currentUser);
+        const av = document.getElementById('nav-avatar');
+        av.setAttribute('style', getAvatarStyle(currentUser));
+        av.innerText = currentUser[0].toUpperCase();
+    } else {
+        document.getElementById('nav-user-area').style.display = 'none';
+        document.getElementById('nav-login-btn').style.display = 'block';
+    }
 }
 
 function setContext(ctx, el) {
@@ -158,8 +197,14 @@ function setContext(ctx, el) {
     } else if (ctx === 'announcements') {
         document.getElementById('view-announcements').classList.add('active'); renderAnnouncements();
     } else {
+        if ((ctx === 'studio' || ctx === 'settings') && !currentUser) return openAuth();
         document.getElementById('view-home').classList.add('active'); render();
     }
+}
+
+function openUpload() {
+    if (!currentUser) return openAuth();
+    document.getElementById('modal-upload').style.display = 'flex';
 }
 
 function render(target = 'v-grid', list = null) {
@@ -616,6 +661,7 @@ function playNext() {
 }
 
 async function postComment() {
+    if (!currentUser) return openAuth();
     const txt = document.getElementById('comm-input').value.trim(); if (!txt) return;
     let existing = activeVideo.comments ? JSON.parse(activeVideo.comments) : [];
     existing.push({ user: currentUser, text: txt, time: Date.now() });
@@ -655,6 +701,7 @@ async function deleteComment(idx) {
 
 let isLiking = false;
 async function handleLike() {
+    if (!currentUser) return openAuth();
     let localLikes = JSON.parse(localStorage.getItem(`cem_likes_${currentUser}`) || '[]');
     if (isLiking || localLikes.includes(activeVideo.id)) return;
     isLiking = true;
@@ -677,6 +724,7 @@ async function handleLike() {
 
 let isSubbing = false;
 async function toggleSub() {
+    if (!currentUser) return openAuth();
     if (isSubbing) return;
     isSubbing = true;
 
@@ -709,6 +757,7 @@ async function toggleSub() {
 }
 
 async function handleUpload() {
+    if (!currentUser) return openAuth();
     const v = document.getElementById('vid-input').files[0];
     const tFile = document.getElementById('vid-thumb').files[0];
     if (!v) return alert("Please select a file to upload!");
@@ -855,7 +904,7 @@ function setFrutigerBg(img) {
 function setTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('cem_theme', t);
-    
+
     if (t === 'frutiger') {
         const bg = localStorage.getItem('cem_frutiger_bg') || 'frutiger.jpg';
         setFrutigerBg(bg);
@@ -865,8 +914,8 @@ function setTheme(t) {
         document.body.style.backgroundPosition = '';
         document.body.style.backgroundAttachment = '';
     }
-    
-    if(currentCtx === 'settings') renderSettings();
+
+    if (currentCtx === 'settings') renderSettings();
 }
 
 function applyGlobalBanner() {
@@ -1119,13 +1168,14 @@ function renderAdminLogs() {
     }
 }
 
+document.getElementById('nav-bar').style.display = 'flex';
+document.getElementById('main-area').style.display = 'block';
+
 if (currentUser) {
-    document.getElementById('nav-bar').style.display = 'flex';
-    document.getElementById('main-area').style.display = 'block';
     if (DEV_USERS.includes(currentUser)) document.getElementById('admin-nav-item').style.display = 'flex';
     fetchData();
 } else {
-    document.getElementById('auth-shield').style.display = 'flex';
+    fetchData(); // Guests can still fetch videos
 }
 
 supabaseClient.auth.onAuthStateChange(async (event, session) => {

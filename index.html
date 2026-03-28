@@ -53,9 +53,11 @@
         <div style="background:#111;padding:40px;border-radius:12px;border:1px solid var(--border);width:100%;max-width:400px;text-align:center;"
             id="auth-form-container">
             <h2 style="margin-top:0" id="auth-title">Login</h2>
-            <input type="email" id="login-email" placeholder="Email Address"
+            <input type="text" id="login-email" placeholder="Email or Username"
                 onkeypress="if(event.key==='Enter')handleAuth()">
             <input type="text" id="login-user" placeholder="Choose Username" style="display:none;"
+                onkeypress="if(event.key==='Enter')handleAuth()">
+            <input type="email" id="reg-email" placeholder="Email (Optional)" style="display:none;"
                 onkeypress="if(event.key==='Enter')handleAuth()">
             <input type="password" id="login-pass" placeholder="Password"
                 onkeypress="if(event.key==='Enter')handleAuth()">
@@ -64,6 +66,7 @@
                 Password?</p>
             <p style="margin-top:5px;color:var(--primary);cursor:pointer;font-weight:800;" id="auth-toggle"
                 onclick="toggleAuthMode()">No account? Register</p>
+            <p style="margin-top:10px;color:gray;cursor:pointer;font-size:12px;" onclick="closeAuth()">Back to Site (Guest Mode)</p>
         </div>
 
         <div style="background:#111;padding:40px;border-radius:12px;border:1px solid var(--border);width:100%;max-width:400px;text-align:center;display:none;"
@@ -91,13 +94,16 @@
                 style="width:100%; max-width:400px; margin-bottom:0; height:40px; background:rgba(0,0,0,0.5); border-radius:100px; padding:0 20px;">
         </div>
         <div style="display:flex; align-items:center; gap:15px; flex-shrink:0;">
-            <div id="u-coins" class="coin-chip">🪙 0</div>
-            <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="setContext('settings')">
-                <div id="u-name-display" style="font-weight:800; font-size:14px;"></div>
-                <div id="nav-avatar" class="v-avatar"></div>
+            <div id="nav-user-area" style="display:none; align-items:center; gap:15px;">
+                <div id="u-coins" class="coin-chip">🪙 0</div>
+                <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="setContext('settings')">
+                    <div id="u-name-display" style="font-weight:800; font-size:14px;"></div>
+                    <div id="nav-avatar" class="v-avatar"></div>
+                </div>
+                <button onclick="logout()"
+                    style="background:transparent; border:none; color:var(--text-dim); font-size:12px; font-weight:800; cursor:pointer;">Logout</button>
             </div>
-            <button onclick="logout()"
-                style="background:transparent; border:none; color:var(--text-dim); font-size:12px; font-weight:800; cursor:pointer;">Logout</button>
+            <button id="nav-login-btn" onclick="openAuth()" class="primary-btn" style="width:auto; padding:8px 20px; font-size:12px;">Log In</button>
         </div>
     </nav>
     <div id="side-overlay" onclick="closeSidebar()"
