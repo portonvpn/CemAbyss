@@ -611,10 +611,11 @@ async function playVideo(id) {
     activeVideo = v; 
     document.getElementById('player-page').style.display = 'block';
 
-    const pTar = document.getElementById('p-target');
-    const isVid = v.file && (v.file.endsWith('.mp4') || v.file.endsWith('.webm') || v.file.endsWith('.mov'));
-    if (isVid) pTar.innerHTML = `<video controls autoplay style="width:100%; height:100%; object-fit:contain;"><source src="${v.file}" type="video/mp4"></video>`;
-    else pTar.innerHTML = `<img src="${v.file}" style="width:100%; height:100%; object-fit:contain; border-radius:12px;">`;
+    const file = v.file || v.url;
+    const isVid = file && (file.endsWith('.mp4') || file.endsWith('.webm') || file.endsWith('.mov'));
+    
+    if (isVid) pTar.innerHTML = `<video controls autoplay style="width:100%; height:100%; object-fit:contain;"><source src="${file}" type="video/mp4"></video>`;
+    else pTar.innerHTML = `<img src="${file || ''}" style="width:100%; height:100%; object-fit:contain; border-radius:12px;">`;
 
     document.getElementById('p-title').innerText = v.title;
     document.getElementById('p-desc-content').innerText = v.details || "";
