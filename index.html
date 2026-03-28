@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CemAbyss | The Next Generation of Video</title>
+    <meta name="description" content="Welcome to the Abyss. Experience an ultra-modern, hyper-aesthetic video platform built for the future of interactive creators.">
+    <meta name="theme-color" content="#a855f7">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 <script>
     const savedTheme = localStorage.getItem('cem_theme');
     if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+    if(savedTheme === 'frutiger') {
+        const fbg = localStorage.getItem('cem_frutiger_bg') || 'frutiger.jpg';
+        document.body.style.backgroundImage = "url('" + fbg + "')";
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center";
+        document.body.style.backgroundAttachment = "fixed";
+    }
 </script>
+
+    <div id="global-banner" style="display:none; position:fixed; bottom:20px; right:20px; z-index:10000; background:var(--primary); color:white; padding:15px; border-radius:12px; font-weight:800; box-shadow:0 5px 20px rgba(0,0,0,0.5); max-width:400px; gap:15px; align-items:center; border:1px solid rgba(255,255,255,0.2);">
+        <span id="banner-text-content" style="flex:1;"></span>
+        <button onclick="document.getElementById('global-banner').style.display='none'" style="background:rgba(0,0,0,0.3); border:none; color:white; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold;">X</button>
+    </div>
 
     <div id="auth-shield" style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:none;align-items:center;justify-content:center;">
         <div style="background:#111;padding:40px;border-radius:12px;border:1px solid var(--border);width:100%;max-width:400px;text-align:center;" id="auth-form-container">
@@ -19,17 +35,19 @@
             <input type="text" id="login-user" placeholder="Username" onkeypress="if(event.key==='Enter')handleAuth()">
             <input type="password" id="login-pass" placeholder="Password" onkeypress="if(event.key==='Enter')handleAuth()">
             <button class="primary-btn" id="auth-btn" onclick="handleAuth()">Submit</button>
-            <p style="margin-top:15px;color:var(--primary);cursor:pointer;font-weight:800;" id="auth-toggle" onclick="toggleAuthMode()">No account? Register</p>
+            <p style="margin-top:5px;color:var(--primary);cursor:pointer;font-weight:800;" id="auth-toggle" onclick="toggleAuthMode()">No account? Register</p>
         </div>
     </div>
 
     <nav id="nav-bar">
         <div style="display:flex; align-items:center; gap:15px; flex-shrink:0;">
-            <div class="hamburger" onclick="toggleSidebar()"><div></div><div></div><div></div></div>
+            <div class="hamburger" onclick="toggleSidebar()">
+                <div></div><div></div><div></div>
+            </div>
             <a href="#" class="logo" onclick="setContext('home')">CEM<span>ABYSS</span></a>
         </div>
         <div style="flex:1; display:flex; justify-content:center; padding: 0 15px;">
-            <input type="text" id="global-search" placeholder="Search videos..." oninput="handleSearch()" style="width:100%; max-width:400px; height:40px; background:rgba(0,0,0,0.5); border-radius:100px; padding:0 20px;">
+            <input type="text" id="global-search" placeholder="Search videos..." oninput="handleSearch()" style="width:100%; max-width:400px; margin-bottom:0; height:40px; background:rgba(0,0,0,0.5); border-radius:100px; padding:0 20px;">
         </div>
         <div style="display:flex; align-items:center; gap:15px; flex-shrink:0;">
             <div id="u-coins" class="coin-chip">🪙 0</div>
@@ -40,6 +58,8 @@
             <button onclick="logout()" style="background:transparent; border:none; color:var(--text-dim); font-size:12px; font-weight:800; cursor:pointer;">Logout</button>
         </div>
     </nav>
+
+    <div id="side-overlay" onclick="closeSidebar()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1800; backdrop-filter:blur(3px);"></div>
 
     <aside id="side-bar">
         <div class="side-item active" onclick="setContext('home', this)">🏠 Home</div>
@@ -53,28 +73,101 @@
     </aside>
 
     <main id="main-area" style="display:none;">
-        <div id="view-home" class="page-view active"><div id="pinned-container"></div><div class="grid" id="v-grid"></div></div>
-        <div id="view-announcements" class="page-view"><div id="announcement-grid"></div></div>
-        <div id="view-marketplace" class="page-view"><div class="marketplace-grid" id="market-grid"></div></div>
+        <div id="view-home" class="page-view active">
+            <div id="pinned-container"></div>
+            <div class="grid" id="v-grid"></div>
+        </div>
+        <div id="view-announcements" class="page-view">
+            <h2 style="margin-top:0; color:var(--primary);">System Announcements</h2>
+            <div id="announcement-grid" style="display:flex; flex-direction:column; gap:20px; max-width:800px;"></div>
+        </div>
+        <div id="view-profile" class="page-view">
+            <div id="profile-head" style="text-align:center; padding: 40px 0; border-bottom:1px solid var(--border)"></div>
+            <div class="grid" id="profile-grid" style="margin-top:30px;"></div>
+        </div>
+        <div id="view-marketplace" class="page-view">
+            <h2 style="margin-top:0; color:var(--primary);">Themes Marketplace</h2>
+            <div class="marketplace-grid" id="market-grid"></div>
+        </div>
         <div id="view-settings" class="page-view">
+            <h2 style="margin-top:0">Settings</h2>
             <div class="settings-card">
-                <h3>Profile</h3>
-                <input type="text" id="set-name" placeholder="New display name">
-                <button class="primary-btn" onclick="saveName()">Save</button>
-                <input type="file" id="set-pfp" accept="image/*"><button class="primary-btn" onclick="savePfp()">Upload</button>
+                <h3>Profile Customization</h3>
+                <input type="text" id="set-name" placeholder="Change display name...">
+                <button class="primary-btn" onclick="saveName()">Save Name</button>
+                <div style="margin-top:20px;">
+                    <input type="file" id="set-pfp" accept="image/*" style="margin-bottom:0; padding:10px;">
+                    <button class="primary-btn" onclick="savePfp()">Upload Avatar</button>
+                </div>
             </div>
-            <div class="settings-card"><h3>Themes</h3><div class="theme-grid" id="my-themes-grid"></div></div>
+            <div class="settings-card">
+                <h3>Your Unlocked Themes</h3>
+                <div class="theme-grid" id="my-themes-grid"></div>
+            </div>
         </div>
         <div id="view-admin" class="page-view">
-            <div class="settings-card"><h3>Banner</h3><textarea id="admin-banner-text"></textarea><button class="primary-btn" onclick="saveBanner()">Broadcast</button></div>
-            <div class="settings-card"><h3>Ranks</h3><div id="admin-ranks-list"></div><input type="text" id="r-id" placeholder="Rank ID"><input type="text" id="r-badge-text" placeholder="Badge Text"><button class="primary-btn" onclick="saveRank()">Save Rank</button></div>
+            <h2 style="margin-top:0; color:var(--primary);">Security & Admin Panel</h2>
+            <div class="settings-card">
+                <h3>Global Broadcast Banner</h3>
+                <textarea id="admin-banner-text" placeholder="Emergency announcement..."></textarea>
+                <input type="color" id="admin-banner-color" value="#e11d48">
+                <button class="primary-btn" onclick="saveBanner()">BROADCAST</button>
+            </div>
+            <div class="settings-card">
+                <h3>Rank Management</h3>
+                <div id="admin-ranks-list" style="display:flex; gap:10px; margin-bottom:20px;"></div>
+                <div id="rank-form" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;" oninput="updateLivePreview()">
+                    <input type="text" id="r-id" placeholder="Rank ID">
+                    <input type="text" id="r-badge-text" placeholder="Badge Text">
+                    <select id="r-name-type" onchange="toggleNameColorInputs()">
+                        <option value="solid">Solid</option>
+                        <option value="gradient">Gradient</option>
+                    </select>
+                    <input type="color" id="r-name-c1" value="#ffffff">
+                    <div id="name-c2-wrap" style="display:none;"><input type="color" id="r-name-c2" value="#a855f7"></div>
+                    <input type="number" id="r-name-glow-size" placeholder="Glow Size">
+                    <input type="color" id="r-name-glow-c" value="#000000">
+                    <label><input type="checkbox" id="r-name-moving"> Moving?</label>
+                </div>
+                <div id="live-rank-preview" style="padding:20px; text-align:center;"><span id="prev-name">Username</span> <span id="prev-badge">BADGE</span></div>
+                <button class="primary-btn" onclick="saveRank()">Save Rank</button>
+            </div>
+            <div class="settings-card">
+                <h3>User Management</h3>
+                <input type="text" id="admin-user-search" placeholder="Username...">
+                <button class="primary-btn" onclick="searchAdminUser()">Search</button>
+                <div id="admin-search-result"></div>
+            </div>
+            <div class="settings-card">
+                <h3>Audit Log</h3>
+                <div id="admin-audit-log" class="audit-log"></div>
+            </div>
         </div>
     </main>
 
     <div id="player-page" style="display:none;">
         <div class="player-layout">
-            <div class="video-wrapper" id="p-target"></div>
-            <div id="p-title"></div><div id="p-uploader"></div><div id="p-likes">0</div>
+            <div>
+                <span onclick="closePlayer()" style="cursor:pointer; color:var(--text-dim); font-weight:800;">← EXIT</span>
+                <div class="video-wrapper" id="p-target"></div>
+                <div class="player-info" style="margin-top:20px; padding:20px; background:rgba(255,255,255,0.02); border-radius:15px; border:1px solid var(--border)">
+                    <h1 id="p-title"></h1>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div id="p-avatar" class="v-avatar"></div>
+                            <div id="p-uploader"></div>
+                            <button id="sub-btn" class="primary-btn" onclick="toggleSub()">SUBSCRIBE</button>
+                        </div>
+                        <button id="like-btn" onclick="handleLike()">❤️ <span id="p-likes">0</span></button>
+                    </div>
+                    <p id="p-desc-content"></p>
+                    <div id="comments-container">
+                        <h3>Comments</h3>
+                        <input type="text" id="comm-input" placeholder="Add a comment..."><button onclick="postComment()">Post</button>
+                        <div id="comments-list"></div>
+                    </div>
+                </div>
+            </div>
             <div id="rec-grid"></div>
         </div>
     </div>
@@ -83,10 +176,10 @@
         <div class="modal-box">
             <h3>Upload</h3>
             <input type="text" id="vid-name" placeholder="Title">
-            <textarea id="vid-desc" placeholder="Desc"></textarea>
+            <textarea id="vid-desc" placeholder="Description"></textarea>
             <input type="file" id="vid-thumb" accept="image/*">
             <input type="file" id="vid-input">
-            <div class="prog-bg" id="prog-bg"><div class="prog-bar" id="prog-bar"></div></div>
+            <div class="prog-bg" id="prog-bg" style="display:none;"><div class="prog-bar" id="prog-bar"></div></div>
             <button class="primary-btn" id="publish-btn" onclick="handleUpload()">Publish</button>
             <p onclick="closeUpload()" style="cursor:pointer;">Cancel</p>
         </div>
