@@ -839,59 +839,55 @@ function openProfile(user) {
 
     // Profile Music
     if (p.music_url) {
-        profileAudio = new Audio(p.music_url);
-        profileAudio.volume = 0.5;
-        // Handling autoplay restriction
+        profileAudio = new Audio(p.music_url); profileAudio.volume = 0.5;
         profileAudio.play().catch(() => {
             document.addEventListener('click', () => { if(profileAudio && profileAudio.paused) profileAudio.play(); }, {once:true});
         });
     }
 
-    // Apply Profile Vibe (Glow and Font)
+    // Apply Profile Vibe
     const container = document.getElementById('profile-container');
     const bColor = p.profile_glow || 'rgba(168, 85, 247, 0.4)';
-    container.style.boxShadow = `0 10px 60px ${bColor}`;
+    container.style.boxShadow = `0 10px 80px ${bColor}`;
     container.style.fontFamily = p.profile_font || 'inherit';
 
     // Banner
     const banner = document.getElementById('profile-banner');
-    if (p.banner_url) {
-        banner.style.background = `url('${p.banner_url}') center/cover no-repeat`;
-    } else {
-        banner.style.background = `linear-gradient(135deg, #1a1a1a, #000)`;
-    }
+    if (p.banner_url) banner.style.background = `url('${p.banner_url}') center/cover no-repeat`;
+    else banner.style.background = `linear-gradient(135deg, #111, #000)`;
 
     // Avatar
     const bdr = p.profile_border || 'border-none';
     document.getElementById('p-avatar-wrap').innerHTML = `
-        <div class="v-avatar ${bdr}" style="width:140px; height:140px; font-size:60px; border-radius:50%; border: 6px solid var(--card); z-index:2; ${getAvatarStyle(user)}">${user ? user[0] : '?'}</div>
+        <div class="v-avatar ${bdr}" style="width:120px; height:120px; font-size:50px; border-radius:50%; z-index:2; ${getAvatarStyle(user)}">${user ? user[0] : '?'}</div>
     `;
 
     // Name Area
     document.getElementById('p-name-area').innerHTML = `
-        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-            <h1 style="margin:0; font-size:32px; letter-spacing:-1px;">${p.display_name || user}</h1>
-            <div id="p-rank-wrap" style="transform:translateY(2px);">${getRankBadge(user)}</div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;">
+            <h1 style="margin:0; font-size:36px; color:#fff; text-shadow: 0 0 20px ${bColor};">${p.display_name || user}</h1>
+            ${getRankBadge(user)}
         </div>
-        <div style="color:var(--text-dim); font-size:16px; margin-top:5px;">@${user}</div>
+        <div style="color:rgba(255,255,255,0.6); font-size:18px; margin-top:8px;">@${user}</div>
     `;
 
-    // Bio & Socials
+    // Bio
     document.getElementById('p-bio').innerText = p.bio || 'This user hasn\'t written a bio yet.';
     
+    // Socials
     const socials = p.social_links ? JSON.parse(p.social_links) : {};
     let sHtml = '';
-    if (socials.discord) sHtml += `<div class="social-icon" title="Discord: ${socials.discord}">👾</div>`;
-    if (socials.twitter) sHtml += `<div class="social-icon" title="Twitter: @${socials.twitter}">🐦</div>`;
-    if (socials.github) sHtml += `<div class="social-icon" title="GitHub: ${socials.github}">📂</div>`;
-    if (socials.yt) sHtml += `<div class="social-icon" title="YouTube">🎥</div>`;
+    if (socials.discord) sHtml += `<div class="social-icon" title="Discord: ${socials.discord}" style="font-size:32px;">👾</div>`;
+    if (socials.twitter) sHtml += `<div class="social-icon" title="Twitter: ${socials.twitter}" style="font-size:32px;">🐦</div>`;
+    if (socials.github) sHtml += `<div class="social-icon" title="GitHub: ${socials.github}" style="font-size:32px;">📂</div>`;
+    if (socials.yt) sHtml += `<div class="social-icon" title="YouTube" style="font-size:32px;">🎥</div>`;
     document.getElementById('p-socials').innerHTML = sHtml;
 
     // Stats & Badges
-    document.getElementById('p-stats').innerHTML = `<strong>${p.subscribers || 0}</strong> subscribers`;
+    document.getElementById('p-stats').innerHTML = `<span style="color:#fff; letter-spacing:1px;">${p.subscribers || 0} SUBSCRIBERS</span>`;
     
     const badges = p.badges ? JSON.parse(p.badges) : [];
-    document.getElementById('p-badges').innerHTML = badges.map(b => `<span class="badge-item" style="font-size:28px;">${b}</span>`).join('');
+    document.getElementById('p-badges').innerHTML = badges.map(b => `<span class="badge-item" style="font-size:32px;">${b}</span>`).join('');
 
     render('profile-grid', allVideos.filter(v => v.uploader === user));
 }
