@@ -130,13 +130,31 @@
             <div id="announcement-grid" style="display:flex; flex-direction:column; gap:20px; max-width:800px;"></div>
         </div>
         <div id="view-profile" class="page-view">
-            <div id="profile-container" style="max-width:1000px; margin:0 auto;">
-                <div id="profile-banner" style="width:100%; height:200px; background:rgba(255,255,255,0.05); border-radius:20px 20px 0 0; overflow:hidden; position:relative;"></div>
-                <div id="profile-head" style="text-align:center; padding-bottom: 40px; border-bottom:1px solid var(--border); background:var(--card); border-radius: 0 0 20px 20px; position:relative;">
-                    <div id="p-badges" style="display:flex; justify-content:center; gap:8px; margin-top: 15px; flex-wrap:wrap; padding: 0 20px;"></div>
-                    <div id="p-socials" style="display:flex; justify-content:center; gap:20px; margin-top:20px;"></div>
+            <div id="profile-container" style="max-width:1050px; margin:0 auto; background:var(--card); border-radius:20px; overflow:hidden; border:1px solid var(--border); box-shadow:0 10px 50px rgba(0,0,0,0.5);">
+                <div id="profile-banner-wrap" style="position:relative;">
+                    <div id="profile-banner" style="width:100%; height:260px; background:linear-gradient(135deg, #1a1a1a, #000); border-bottom:1px solid var(--border);"></div>
+                    <div style="position:absolute; bottom:-60px; left:40px; z-index:5;">
+                        <div id="p-avatar-wrap"></div>
+                    </div>
                 </div>
-                <div class="grid" id="profile-grid" style="margin-top:30px;"></div>
+                
+                <div id="profile-info-bar" style="padding: 70px 40px 30px; display:flex; flex-wrap:wrap; gap:30px; align-items:flex-start;">
+                    <div style="flex:1; min-width:300px;">
+                        <div id="p-name-area"></div>
+                        <div id="p-bio" style="margin-top:15px; color:var(--text); font-size:15px; opacity:0.9; line-height:1.6; white-space:pre-wrap;"></div>
+                        <div id="p-socials" style="display:flex; gap:15px; margin-top:20px;"></div>
+                    </div>
+                    
+                    <div style="min-width:200px; text-align:right;">
+                        <div id="p-stats" style="font-size:14px; color:var(--text-dim); margin-bottom:15px;"></div>
+                        <div id="p-badges" style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;"></div>
+                    </div>
+                </div>
+
+                <div style="padding: 0 40px 40px;">
+                    <h3 style="margin:20px 0; border-bottom:1px solid var(--border); padding-bottom:10px;">Videos</h3>
+                    <div class="grid" id="profile-grid"></div>
+                </div>
             </div>
         </div>
         <div id="view-marketplace" class="page-view">
