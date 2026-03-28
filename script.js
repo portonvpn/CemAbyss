@@ -142,28 +142,34 @@ async function fetchData() {
 
     // Initial routing logic
     if(!window.routingHandled) {
-        const hash = window.location.hash.slice(1);
+        let hash = window.location.hash.slice(1);
         if(hash.startsWith('video/')) {
             const vidId = hash.split('/')[1];
             playVideo(vidId);
         } else if(hash) {
-            setContext(hash, null, true);
+            setContext(hash.replace('/', ''), null, true);
         }
         window.routingHandled = true;
     }
 }
 
-window.onpopstate = (e) => {
-    if(e.state && e.state.ctx) {
-        if(e.state.ctx === 'video' && e.state.id) {
-            playVideo(e.state.id);
-        } else {
-            closePlayer();
-            setContext(e.state.ctx, null, true);
-        }
+window.onhashchange = () => {
+    const hash = window.location.hash.slice(1);
+    if (hash.startsWith('video/')) {
+        const id = hash.split('/')[1];
+        playVideo(id);
+    } else if (hash) {
+        setContext(hash.replace('/', ''), null, true);
     } else {
         closePlayer();
         setContext('home', null, true);
+    }
+};
+
+window.onpopstate = (e) => {
+    if(e.state && e.state.ctx) {
+        if(e.state.ctx === 'video' && e.state.id) playVideo(e.state.id);
+        else { closePlayer(); setContext(e.state.ctx, null, true); }
     }
 };
 
@@ -185,9 +191,8 @@ function setContext(ctx, el, skipPush = false) {
         });
     }
 
-    if (!skipPush && window.location.protocol !== 'file:') {
-        const url = ctx === 'home' ? '#/home' : `#${ctx}`;
-        history.pushState({ ctx }, '', url);
+    if (!skipPush) {
+        window.location.hash = ctx === 'home' ? '/home' : ctx;
     }
 
     if (ctx === 'settings') {
@@ -611,6 +616,7 @@ async function playVideo(id) {
     activeVideo = v; 
     document.getElementById('player-page').style.display = 'block';
 
+    const pTar = document.getElementById('p-target');
     const file = v.file || v.url;
     const isVid = file && (file.endsWith('.mp4') || file.endsWith('.webm') || file.endsWith('.mov'));
     
@@ -637,9 +643,7 @@ async function playVideo(id) {
     if (currentUser && v.likes?.includes(currentUser)) likeBtn.style.background = "var(--primary)";
     else likeBtn.style.background = "#111";
 
-    if (window.location.protocol !== 'file:') {
-        history.pushState({ ctx: 'video', id }, '', `#video/${id}`);
-    }
+    window.location.hash = `video/${id}`;
     loadComments();
     renderRecs();
 }
@@ -866,10 +870,7 @@ function closeEdit() { document.getElementById('modal-edit').style.display = 'no
 function closePlayer() { 
     document.getElementById('player-page').style.display = 'none'; 
     document.getElementById('p-target').innerHTML = ""; 
-    const url = currentCtx === 'home' ? '#/home' : `#${currentCtx}`;
-    if (window.location.protocol !== 'file:') {
-        history.pushState({ ctx: currentCtx }, '', url);
-    }
+    window.location.hash = currentCtx === 'home' ? '/home' : currentCtx;
 }
 
 async function pinVideo(id) {
