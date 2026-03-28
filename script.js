@@ -83,7 +83,17 @@ async function handleAuth() {
         if (!u || !p) return alert("Username & Password required");
 
         let emailToUse = regE;
-        if (!emailToUse) emailToUse = `${u}@cemabyss.local`;
+        if (!emailToUse) {
+            // Clean username for direct email usage (remove spaces/special chars)
+            const cleanU = u.toLowerCase().replace(/[^a-z0-9]/g, '');
+            emailToUse = `${cleanU}@cemabyss.com`;
+        } else {
+            // Basic format check if email was provided
+            if (!emailToUse.includes('@') || !emailToUse.includes('.')) {
+                return alert("The email you provided is not formatted correctly! (e.g. name@example.com)");
+            }
+        }
+        emailToUse = emailToUse.toLowerCase();
 
         if (localStorage.getItem('cem_registration_ipblock')) {
             return alert("Registration Limit Exceeded: Device IP blocked.");
@@ -127,8 +137,9 @@ async function handleAuth() {
                 emailToSignIn = prof.email_lookup;
             } else {
                 // Fallback for legacy users without email_lookup column populated
-                // Note: Auth emails are case-insensitive, so we use lowercase for fallback
-                emailToSignIn = `${inputEmail}@cemabyss.local`.toLowerCase();
+                // Note: Auth emails are case-insensitive, so we use lowercase/sanitized for fallback
+                const cleanU = inputEmail.toLowerCase().replace(/[^a-z0-9]/g, '');
+                emailToSignIn = `${cleanU}@cemabyss.com`;
             }
         }
 
@@ -845,10 +856,11 @@ function openProfile(user) {
     // Render Banner
     const banner = document.getElementById('profile-banner');
     if (p.banner_url) {
-        banner.innerHTML = `<img src="${p.banner_url}" style="width:100%; height:100%; object-fit:cover;">`;
+        banner.setAttribute('style', `width:100%; height:220px; background:url('${p.banner_url}') center/cover no-repeat; border-radius:20px 20px 0 0; position:relative;`);
     } else {
-        banner.innerHTML = `<div style="width:100%; height:100%; background:linear-gradient(45deg, #111, #222);"></div>`;
+        banner.setAttribute('style', `width:100%; height:220px; background:linear-gradient(45deg, #111, #222); border-radius:20px 20px 0 0; position:relative;`);
     }
+    banner.innerHTML = ""; // Clear img tag if any
 
     // Render Badges and Socials
     const bCont = document.getElementById('p-badges');
@@ -1208,7 +1220,8 @@ async function saveVibe() {
 }
 
 async function saveEliteVibe() {
-    const music = document.getElementById('set-music').value.trim();
+    let music = document.getElementById('set-music').value.trim();
+    const musicFile = document.getElementById('set-music-file').files[0];
     const border = document.getElementById('set-border').value;
     const socials = {
         discord: document.getElementById('set-social-discord').value.trim(),
@@ -1220,6 +1233,16 @@ async function saveEliteVibe() {
     const selectedBadges = [];
     document.querySelectorAll('.badge-chk:checked').forEach(c => selectedBadges.push(c.value));
 
+    // Handle Music Upload
+    if (musicFile) {
+        const fd = new FormData(); fd.append('file', musicFile); fd.append('upload_preset', UPLOAD_PRESET);
+        try {
+            const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd });
+            const d = await r.json();
+            if (d.secure_url) music = d.secure_url;
+        } catch (e) { console.error("Music Upload Error:", e); }
+    }
+
     await supabaseClient.from('profiles').update({ 
         music_url: music, 
         profile_border: border, 
@@ -1227,6 +1250,7 @@ async function saveEliteVibe() {
         badges: JSON.stringify(selectedBadges)
     }).eq('username', currentUser);
     
+    document.getElementById('set-music-file').value = '';
     fetchData(); alert("Elite Vibe Updated!");
 }
 
