@@ -902,55 +902,132 @@ function playNext() {
 
 async function postComment() {
     if (!currentUser) return openAuth();
-    const txt = document.getElementById('comm-input').value.trim(); if (!txt) return;
-    let existing = activeVideo.comments ? JSON.parse(activeVideo.comments) : [];
-    existing.push({ user: currentUser, text: txt, time: Date.now() });
+    const inp = document.getElementById('comm-input');
+    const txt = inp.value.trim(); if (!txt) return;
+
+    let existing = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
+    const newId = Date.now() + Math.random().toString(36).substr(2, 5);
+    const newComment = { id: newId, user: currentUser, text: txt, time: Date.now(), parentId: activeReplyId };
+    
+    existing.push(newComment);
+    
     const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(existing) }).eq('id', activeVideo.id);
-    if (!error) { activeVideo.comments = JSON.stringify(existing); document.getElementById('comm-input').value = ''; loadComments(); }
+    if (!error) {
+        activeVideo.comments = JSON.stringify(existing);
+        inp.value = '';
+        cancelReply();
+        loadComments();
+
+        // NOTIFICATIONS
+        // 1. Notify Video Owner
+        if (activeVideo.uploader !== currentUser) {
+            pushNotif(activeVideo.uploader, activeReplyId ? 'replied' : 'commented', activeVideo.id, newId);
+        }
+
+        // 2. Notify Parent Commenter (if it's a reply)
+        if (activeReplyId) {
+            const parent = existing.find(c => c.id == activeReplyId);
+            if (parent && parent.user !== currentUser && parent.user !== activeVideo.uploader) {
+                pushNotif(parent.user, 'replied', activeVideo.id, newId);
+            }
+        }
+    }
 }
 
 function loadComments() {
     const list = document.getElementById('comments-list');
     let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
     
-    // Give legacy comments a fallback id
     arr = arr.map((c, i) => ({ ...c, id: c.id || `legacy-${i}` }));
 
-    // Treat parentId: null, undefined, "undefined", "null" all as top-level
-    const isParent = c => !c.parentId || c.parentId === 'undefined' || c.parentId === 'null';
-    const parents = arr.filter(c => isParent(c));
-    const children = arr.filter(c => !isParent(c));
+    // Sorting: Pinned first, then newest
+    const sorted = arr.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0; // maintain time order otherwise
+    });
 
-    list.innerHTML = parents.reverse().map(p => `
-        <div class="comment-item" id="comment-${p.id}">
-            <div class="v-avatar" style="width:36px; height:36px; font-size:14px; ${getAvatarStyle(p.user)}" onclick="openProfile('${p.user}')">${p.user[0]}</div>
-            <div style="flex:1">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div class="comment-user" onclick="openProfile('${p.user}')">${formatName(p.user)}</div>
-                    ${p.user === activeVideo.uploader ? '<span style="background:var(--primary); color:white; font-size:9px; padding:2px 4px; border-radius:4px; font-weight:800;">VIDEO OWNER</span>' : ''}
-                </div>
-                <div class="comment-text">${p.text}</div>
-                <div style="display:flex; gap:15px; margin-top:8px;">
-                    <span onclick="openReply('${p.id}', '${p.user}')" style="font-size:11px; color:var(--primary); cursor:pointer; font-weight:800;">Reply</span>
-                    ${(DEV_USERS.includes(currentUser) || p.user === currentUser) ? `<span onclick="deleteComment('${p.id}')" style="color:rgba(255,0,0,0.6); font-size:11px; cursor:pointer;">Delete</span>` : ''}
-                </div>
-                <div id="replies-${p.id}" style="margin-top:10px; border-left: 2px solid var(--border); padding-left:15px;">
-                    ${children.filter(c => c.parentId == p.id).map(c => `
-                        <div class="comment-item" id="comment-${c.id}" style="margin-top:10px; padding:0;">
-                            <div class="v-avatar" style="width:28px; height:28px; font-size:10px; ${getAvatarStyle(c.user)}" onclick="openProfile('${c.user}')">${c.user[0]}</div>
-                            <div style="flex:1">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div class="comment-user" onclick="openProfile('${c.user}')">${formatName(c.user)}</div>
-                                    ${c.user === activeVideo.uploader ? '<span style="background:var(--primary); color:white; font-size:9px; padding:2px 4px; border-radius:4px; font-weight:800;">VIDEO OWNER</span>' : ''}
-                                </div>
-                                <div class="comment-text"><span style="color:var(--primary); font-weight:700;">@${p.user}</span> ${c.text}</div>
-                                ${(DEV_USERS.includes(currentUser) || c.user === currentUser) ? `<span onclick="deleteComment('${c.id}')" style="color:rgba(255,0,0,0.6); font-size:10px; cursor:pointer; margin-top:5px; display:inline-block;">Delete</span>` : ''}
-                            </div>
+    // Top-level comments
+    const isParent = c => !c.parentId || c.parentId === 'undefined' || c.parentId === 'null';
+    const parents = sorted.filter(c => isParent(c));
+    const children = sorted.filter(c => !isParent(c));
+
+    list.innerHTML = parents.reverse().map(p => {
+        const subReplies = children.filter(c => c.parentId == p.id);
+        const pinHtml = p.isPinned ? `<div style="color:var(--primary); font-size:11px; font-weight:800; margin-bottom:5px; display:flex; align-items:center; gap:5px;">📌 Pinned</div>` : '';
+        const canPin = activeVideo.uploader === currentUser;
+
+        return `
+        <div class="comment-item" id="comment-${p.id}" style="margin-bottom:20px;">
+            ${pinHtml}
+            <div style="display:flex; gap:12px;">
+                <div class="v-avatar" style="width:36px; height:36px; font-size:14px; flex-shrink:0; ${getAvatarStyle(p.user)}" onclick="openProfile('${p.user}')">${p.user[0]}</div>
+                <div style="flex:1">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="comment-user" onclick="openProfile('${p.user}')">${formatName(p.user)}</div>
+                        ${p.user === activeVideo.uploader ? '<span style="background:var(--primary); color:white; font-size:9px; padding:2px 6px; border-radius:100px; font-weight:800;">OWNER</span>' : ''}
+                    </div>
+                    <div class="comment-text">${p.text}</div>
+                    <div style="display:flex; gap:15px; margin-top:8px;">
+                        <span onclick="openReply('${p.id}', '${p.user}')" style="font-size:11px; color:var(--primary); cursor:pointer; font-weight:800;">Reply</span>
+                        ${(DEV_USERS.includes(currentUser) || p.user === currentUser) ? `<span onclick="deleteComment('${p.id}')" style="color:rgba(255,0,0,0.6); font-size:11px; cursor:pointer;">Delete</span>` : ''}
+                        ${canPin ? `<span onclick="togglePinComment('${p.id}')" style="color:var(--primary); font-size:11px; cursor:pointer;">${p.isPinned ? 'Unpin' : 'Pin'}</span>` : ''}
+                    </div>
+
+                    ${subReplies.length > 0 ? `
+                        <div id="toggle-replies-${p.id}" onclick="toggleRepliesDisplay('${p.id}')" style="margin-top:10px; color:var(--primary); font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:8px;">
+                            <span id="icon-replies-${p.id}">▶</span> View ${subReplies.length} replies
                         </div>
-                    `).join('')}
+                        <div id="replies-${p.id}" style="margin-top:10px; border-left: 2px solid var(--border); padding-left:15px; display:none;">
+                            ${subReplies.map(c => `
+                                <div class="comment-item" id="comment-${c.id}" style="margin-top:15px; padding:0;">
+                                    <div style="display:flex; gap:10px;">
+                                        <div class="v-avatar" style="width:28px; height:28px; font-size:10px; flex-shrink:0; ${getAvatarStyle(c.user)}" onclick="openProfile('${c.user}')">${c.user[0]}</div>
+                                        <div style="flex:1">
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <div class="comment-user" style="font-size:12px;" onclick="openProfile('${c.user}')">${formatName(c.user)}</div>
+                                            </div>
+                                            <div class="comment-text" style="font-size:13px;">${c.text}</div>
+                                            <div style="display:flex; gap:15px; margin-top:5px;">
+                                                <span onclick="openReply('${p.id}', '${c.user}')" style="font-size:11px; color:var(--primary); cursor:pointer; font-weight:800;">Reply</span>
+                                                ${(DEV_USERS.includes(currentUser) || c.user === currentUser) ? `<span onclick="deleteComment('${c.id}')" style="color:rgba(255,0,0,0.6); font-size:11px; cursor:pointer;">Delete</span>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
                 </div>
             </div>
-        </div>`).join('') || '<p style="color:gray; text-align:center; padding:20px;">No comments yet. Be the first!</p>';
+        </div>`;
+    }).join('') || '<p style="color:gray; text-align:center; padding:20px;">No comments yet. Be the first!</p>';
+}
+
+function toggleRepliesDisplay(id) {
+    const list = document.getElementById(`replies-${id}`);
+    const icon = document.getElementById(`icon-replies-${id}`);
+    const btn = document.getElementById(`toggle-replies-${id}`);
+    if (list.style.display === 'none') {
+        list.style.display = 'block';
+        icon.innerText = '▼';
+        btn.innerHTML = `<span id="icon-replies-${id}">▼</span> Hide replies`;
+    } else {
+        list.style.display = 'none';
+        icon.innerText = '▶';
+        btn.innerHTML = `<span id="icon-replies-${id}">▶</span> View replies`;
+    }
+}
+
+async function togglePinComment(id) {
+    let arr = JSON.parse(activeVideo.comments || '[]');
+    arr.forEach(c => {
+        if (c.id == id) c.isPinned = !c.isPinned;
+        else if (!c.parentId) c.isPinned = false; // unpin others if pinning new (YouTube style)
+    });
+    await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
+    activeVideo.comments = JSON.stringify(arr);
+    loadComments();
 }
 
 let activeReplyId = null;
