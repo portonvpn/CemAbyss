@@ -188,64 +188,35 @@
                         <button class="primary-btn" id="btn-banner" onclick="saveBanner()">Upload Banner</button>
                     </div>
                 </div>
-            </div>
-            
             <div class="settings-card">
-                <h3>Vibe Customization (Advanced)</h3>
+                <h3>Profile Customization</h3>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
                     <div>
-                        <label style="color:var(--text-dim); font-size:12px;">Profile Card Glow</label>
-                        <input type="color" id="set-glow" value="#a855f7" style="height:48px; padding:0; background:transparent; border:none;">
-                    </div>
-                    <div>
-                        <label style="color:var(--text-dim); font-size:12px;">Profile Accent Font</label>
-                        <select id="set-font">
-                            <option value="inherit">Default</option>
-                            <option value="monospace">Retro Hacker</option>
-                            <option value="serif">Classic Serif</option>
-                            <option value="'Plus Jakarta Sans', sans-serif">Modern Jakarta</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="primary-btn" style="margin-top:15px; background:#222;" onclick="saveVibe()">Save Vibe Settings</button>
-            </div>
-
-            <div class="settings-card">
-                <h3>Vibe Customization (Elite)</h3>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                    <div>
-                        <label style="color:var(--text-dim); font-size:12px;">Profile Music (Link or Upload)</label>
-                        <input type="text" id="set-music" placeholder="Music Link (Direct MP3 URL)">
-                        <input type="file" id="set-music-file" accept="audio/*" style="margin-top:5px; padding:8px;">
-                    </div>
-                    <div>
-                        <label style="color:var(--text-dim); font-size:12px;">Animated Avatar Border</label>
-                        <select id="set-border">
-                            <option value="border-none">None</option>
-                            <option value="border-rainbow">🌈 Rainbow Flow</option>
-                            <option value="border-pulse">💜 Purple Pulse</option>
-                            <option value="border-fire">🔥 Flicker Fire</option>
-                            <option value="border-glass">💎 Diamond Glass</option>
-                        </select>
+                        <label style="color:var(--text-dim); font-size:12px;">Music Stream Policy</label>
+                        <input type="text" id="set-music" placeholder="Direct MP3 Link...">
                     </div>
                 </div>
 
                 <div style="margin-top:20px; border-top: 1px solid var(--border); padding-top:20px;">
-                    <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:10px;">Social Identities</label>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <input type="text" id="set-social-discord" placeholder="Discord Username">
-                        <input type="text" id="set-social-twitter" placeholder="Twitter (X) handle">
-                        <input type="text" id="set-social-github" placeholder="GitHub Username">
-                        <input type="text" id="set-social-yt" placeholder="YouTube Channel Link">
+                    <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:10px;">Social Identities (Clickable on Profile)</label>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <input type="text" id="set-yt" placeholder="YouTube (e.g. @username)">
+                        <input type="text" id="set-ig" placeholder="Instagram (e.g. username)">
+                        <input type="text" id="set-tiktok" placeholder="TikTok (e.g. @username)">
+                        <input type="text" id="set-discord" placeholder="Discord (e.g. name#0000)">
                     </div>
+                    <button class="primary-btn" onclick="saveSocials()" style="margin-top:10px;">Save Socials</button>
                 </div>
+            </div>
 
-                <div style="margin-top:20px; border-top: 1px solid var(--border); padding-top:20px;">
-                    <label style="color:var(--text-dim); font-size:12px; display:block; margin-bottom:10px;">Profile Badges (Pick up to 5)</label>
-                    <div id="set-badges-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap:5px; max-height:150px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;"></div>
+            <div class="settings-card" id="settings-galaxy-card" style="display:none; border:1px solid #a855f7; background:rgba(168, 85, 247, 0.05); border-radius:16px;">
+                <h3 style="color:#a855f7; margin-bottom:5px;">🌌 Elite Galaxy Profile</h3>
+                <p style="font-size:12px; color:var(--text-dim); margin-bottom:15px;">Activate your celestial profile overlay across the entire platform.</p>
+                <div style="display:flex; gap:10px;">
+                    <button class="primary-btn" onclick="toggleGalaxyTheme(true)" style="background:#a855f7; flex:1;">Apply Galaxy</button>
+                    <button class="primary-btn" onclick="toggleGalaxyTheme(false)" style="background:#222; flex:1;">Disable</button>
                 </div>
-
-                <button class="primary-btn" style="margin-top:20px; background:var(--primary);" onclick="saveEliteVibe()">Update Elite Vibe</button>
+            </div>
             </div>
             <div class="settings-card">
                 <h3>Your Unlocked Themes</h3>
@@ -394,10 +365,6 @@
                                 id="r-badge-glow-size" value="0"></div>
 
                         <div style="grid-column: span 2; margin-top:10px;">
-                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; background:rgba(168, 85, 247, 0.1); padding:10px; border-radius:8px; border:1px solid rgba(168, 85, 247, 0.3);">
-                                <input type="checkbox" id="r-galaxy" onchange="updateLivePreview()" style="width:20px; height:20px; cursor:pointer;">
-                                <label for="r-galaxy" style="color:#a855f7; font-size:14px; font-weight:900; cursor:pointer;">🌌 Elite Galaxy Theme</label>
-                            </div>
                             <label style="font-size:12px; color:gray">Live Preview</label>
                             <div id="live-rank-preview" style="background:#050505; border:1px solid var(--border); padding:15px; border-radius:8px; display:flex; align-items:center; font-size:16px; margin-top:5px; justify-content:center;">
                                 <span id="prev-name" style="font-weight:800;">Username</span>

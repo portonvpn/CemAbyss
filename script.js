@@ -527,9 +527,6 @@ function updateLivePreview() {
     pName.style.backgroundSize = nMoving && nType === 'gradient' ? '200% 200%' : '100% 100%';
     pName.style.animation = nMoving && nType === 'gradient' ? 'rankBGMove 3s ease infinite' : 'none';
 
-    // Galaxy Toggle Update
-    const hasGal = document.getElementById('r-galaxy').checked;
-    pBadge.className = hasGal ? 'galaxy-rank' : ''; 
     pBadge.style.display = 'inline-block';
     pBadge.style.padding = '2px 6px';
     pBadge.style.fontSize = '10px';
@@ -577,7 +574,6 @@ function clearRankForm() {
     document.getElementById('r-badge-glow-c').value = '#000000';
     document.getElementById('r-badge-glow-size').value = 0;
     document.getElementById('r-badge-root-rad').value = 4;
-    document.getElementById('r-galaxy').checked = false;
 
     document.getElementById('r-delete-btn').style.display = 'none';
 
@@ -611,7 +607,6 @@ function editRank(id) {
     document.getElementById('r-badge-glow-c').value = raw.bgcol || '#000000';
     document.getElementById('r-badge-glow-size').value = d.badgeGlowSize || 0;
     document.getElementById('r-badge-root-rad').value = d.badgeBorderRadius || 0;
-    document.getElementById('r-galaxy').checked = !!d.hasGalaxy;
 
     document.getElementById('r-delete-btn').style.display = 'block';
 
@@ -650,7 +645,6 @@ async function saveRank() {
         badgeGlow: bgcol,
         badgeGlowSize: parseInt(document.getElementById('r-badge-glow-size').value) || 0,
         badgeBorderRadius: parseInt(document.getElementById('r-badge-root-rad').value) || 0,
-        hasGalaxy: document.getElementById('r-galaxy').checked,
         raw: { nType, nc1, nc2, bType, bc1, bc2, nglc, bgcol }
     };
 
@@ -1159,6 +1153,31 @@ async function logAudit(action, target, details) {
     await supabaseClient.from('audit_logs').insert([{ admin_user: currentUser, action, target, details }]);
 }
 
+function renderProfile(u) {
+    const p = allProfiles.find(x => x.username === u);
+    if (!p) return;
+
+    let socHtml = '';
+    const d = p.data || {};
+    if (d.yt) socHtml += `<a href="https://www.youtube.com/${d.yt.startsWith('@') ? d.yt : '@'+d.yt}" target="_blank"><img src="youtube.png" class="social-link-icon"></a>`;
+    if (d.ig) socHtml += `<a href="https://www.instagram.com/${d.ig}/" target="_blank"><img src="instagram.png" class="social-link-icon"></a>`;
+    if (d.tiktok) socHtml += `<a href="https://www.tiktok.com/${d.tiktok.startsWith('@') ? d.tiktok : '@'+d.tiktok}" target="_blank"><img src="tiktok.png" class="social-link-icon"></a>`;
+    if (d.discord) socHtml += `<img src="discord.png" class="social-link-icon" onclick="alert('Discord: ${d.discord}')" title="${d.discord}">`;
+
+    const galaxyClass = p.unlocked_themes?.includes('galaxy_active') ? 'galaxy-profile' : '';
+
+    return `
+        <div class="video-card ${galaxyClass}" style="padding:15px; text-align:center;">
+            <div class="v-avatar" style="width:80px; height:80px; font-size:32px; margin:0 auto 10px; ${getAvatarStyle(p.username)}">${p.username[0]}</div>
+            ${formatName(p.username)}
+            <p style="font-size:12px; color:var(--text-dim); margin-top:10px;">${p.bio || 'No bio yet.'}</p>
+            <div style="display:flex; justify-content:center; gap:12px; margin-top:15px;">
+                ${socHtml}
+            </div>
+        </div>
+    `;
+}
+
 async function toggleShadowban(u) {
     const p = allProfiles.find(x => x.username === u);
     if (!p) return;
@@ -1338,6 +1357,32 @@ async function buyTheme(tid, price) {
     }
 }
 
+async function saveSocials() {
+    if (!currentUser) return;
+    const p = allProfiles.find(x => x.username === currentUser);
+    const d = p.data || {};
+    d.yt = document.getElementById('set-yt').value.trim();
+    d.discord = document.getElementById('set-discord').value.trim();
+    d.ig = document.getElementById('set-ig').value.trim();
+    d.tiktok = document.getElementById('set-tiktok').value.trim();
+    await supabaseClient.from('profiles').update({ data: d }).eq('username', currentUser);
+    fetchData(); alert("Socials updated!");
+}
+
+async function toggleGalaxyTheme(active) {
+    if (!currentUser) return;
+    const p = allProfiles.find(x => x.username === currentUser);
+    let unlocked = p.unlocked_themes || [];
+    if (active) {
+        if (!unlocked.includes('galaxy')) return alert("Purchase the Galaxy Bundle in Marketplace first!");
+        if (!unlocked.includes('galaxy_active')) unlocked.push('galaxy_active');
+    } else {
+        unlocked = unlocked.filter(t => t !== 'galaxy_active');
+    }
+    await supabaseClient.from('profiles').update({ unlocked_themes: unlocked }).eq('username', currentUser);
+    fetchData(); location.reload();
+}
+
 async function saveBio() {
     const b = document.getElementById('set-bio').value.trim();
     await supabaseClient.from('profiles').update({ bio: b }).eq('username', currentUser);
@@ -1404,10 +1449,22 @@ const BADGE_LIST = ["💎","🏆","👑","🔥","⭐","✨","🦄","🎮","🎧"
 
 function renderSettings() {
     const p = allProfiles.find(x => x.username === currentUser);
-    if (!p) return;
+    if (p) {
+        document.getElementById('set-name').value = p.display_name || '';
+        document.getElementById('set-bio').value = p.bio || '';
+        
+        const d = p.data || {};
+        const sy = document.getElementById('set-yt'), sd = document.getElementById('set-discord'), sig = document.getElementById('set-ig'), st = document.getElementById('set-tiktok');
+        if (sy) sy.value = d.yt || '';
+        if (sd) sd.value = d.discord || '';
+        if (sig) sig.value = d.ig || '';
+        if (st) st.value = d.tiktok || '';
 
-    if (document.getElementById('set-name') && !document.getElementById('set-name').value) document.getElementById('set-name').value = p.display_name || '';
-    if (document.getElementById('set-bio') && !document.getElementById('set-bio').value) document.getElementById('set-bio').value = p.bio || '';
+        // Galaxy Visibility
+        const gCard = document.getElementById('settings-galaxy-card');
+        if (gCard) gCard.style.display = (p.unlocked_themes || []).includes('galaxy') ? 'block' : 'none';
+    }
+
     if (document.getElementById('set-glow')) document.getElementById('set-glow').value = p.profile_glow || '#a855f7';
     if (document.getElementById('set-font')) document.getElementById('set-font').value = p.profile_font || 'inherit';
     
