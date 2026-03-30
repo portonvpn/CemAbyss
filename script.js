@@ -82,7 +82,7 @@ function formatName(u) {
         nameMain = `<span class="${glow}">${dName}</span> ${badge}`;
     }
 
-    return `<div style="display:inline-flex; flex-direction:column; line-height:1.2; text-align:left;">
+    return `<div onclick="event.stopPropagation(); openProfile('${u}')" style="display:inline-flex; flex-direction:column; line-height:1.2; text-align:left; cursor:pointer;">
                 <div style="font-weight:800">${nameMain}</div>
                 <div style="color:var(--text-dim); font-size:11px; font-weight:normal; letter-spacing:0.5px;">@${u}</div>
             </div>`;
@@ -236,26 +236,46 @@ async function fetchData() {
 }
 
 function handleRouting() {
+    const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
     const vId = params.get('v');
-    const cId = params.get('c');
     const tab = params.get('tab');
+    const cId = params.get('c');
+
+    // 1. Sleek Profile Path (/@username)
+    if (path.startsWith('/@')) {
+        const u = path.substring(2);
+        if (u) return openProfile(u);
+    }
     
+    // 2. Sleek Video Path (/v/slug)
+    if (path.startsWith('/v/')) {
+        const vidSlug = path.substring(3);
+        if (vidSlug) {
+            const vid = allVideos.find(x => (x.video_id === vidSlug || x.id == vidSlug));
+            if (vid) {
+                openVideo(vid.id);
+                if (cId) setTimeout(() => highlightComment(cId), 1000);
+                return;
+            }
+        }
+    }
+
+    // 3. Legacy Video Query (?v=id)
     if (vId) {
         const vid = allVideos.find(x => (x.video_id === vId || x.id == vId));
         if (vid) {
             openVideo(vid.id);
             if (cId) setTimeout(() => highlightComment(cId), 1000);
-            return; // Video routing takes priority
+            return;
         }
     }
 
+    // 4. Tab selection (?tab=name) or fallback to home
     if (tab) {
-        // Find sidebar element for this tab
         const el = document.querySelector(`[onclick*="setContext('${tab}'"]`);
-        if (el) setContext(tab, el);
+        setContext(tab, el);
     } else {
-        // Default to home if no tab or video specified
         setContext('home', document.querySelector('.side-item'));
     }
 }
@@ -304,13 +324,15 @@ function setContext(ctx, el) {
     currentCtx = ctx;
 
     // Update URL when switching tabs (if not already there)
-    const currentUrl = new URL(window.location);
-    if (currentUrl.searchParams.get('tab') !== ctx && ctx !== 'home') {
-        const newUrl = window.location.origin + window.location.pathname + '?tab=' + ctx;
-        window.history.pushState({ path: newUrl }, '', newUrl);
-    } else if (ctx === 'home' && currentUrl.searchParams.has('tab')) {
-        const newUrl = window.location.origin + window.location.pathname;
-        window.history.pushState({ path: newUrl }, '', newUrl);
+    if (window.location.protocol !== 'file:') {
+        const currentUrl = new URL(window.location);
+        if (currentUrl.searchParams.get('tab') !== ctx && ctx !== 'home') {
+            const newUrl = window.location.origin + window.location.pathname + '?tab=' + ctx;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+        } else if (ctx === 'home' && currentUrl.searchParams.has('tab')) {
+            const newUrl = window.location.origin + window.location.pathname;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+        }
     }
 
     // Reset Sidebar UI
@@ -834,12 +856,14 @@ async function openVideo(id) {
     // Update URL without reloading (only if changed)
     const slug = activeVideo.video_id || activeVideo.id;
     const currentUrl = new URL(window.location);
-    if (currentUrl.searchParams.get('v') !== slug.toString()) {
-        const newUrl = window.location.origin + window.location.pathname + '?v=' + slug;
+    if (window.location.protocol !== 'file:' && currentUrl.pathname !== '/v/' + slug) {
+        const newUrl = window.location.origin + '/v/' + slug;
         window.history.pushState({ path: newUrl }, '', newUrl);
     }
 
-    document.getElementById('player-page').style.display = 'block';
+    document.querySelectorAll('.page-view').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+    const pLayer = document.getElementById('player-page');
+    if (pLayer) { pLayer.style.display = 'block'; pLayer.classList.add('active'); }
     const p = allProfiles.find(x => x.username === activeVideo.uploader);
     document.getElementById('p-title').innerText = activeVideo.title;
     document.getElementById('p-uploader').innerHTML = formatName(activeVideo.uploader);
@@ -1256,9 +1280,11 @@ async function handleUpload() {
 
 function openProfile(user) {
     if (profileAudio) { profileAudio.pause(); profileAudio = null; }
-    currentCtx = 'profile'; document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
-    document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
-    document.getElementById('view-profile').classList.add('active');
+    currentCtx = 'profile'; 
+    document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.page-view').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+    const v = document.getElementById('view-profile'); 
+    if (v) { v.classList.add('active'); v.style.display = 'block'; }
     closeSidebar(); closePlayer();
 
     const p = allProfiles.find(x => x.username === user);
@@ -1317,6 +1343,12 @@ function openProfile(user) {
     document.getElementById('p-badges').innerHTML = badges.map(b => `<span class="badge-item" style="font-size:32px;">${b}</span>`).join('');
 
     render('profile-grid', allVideos.filter(v => v.uploader === user));
+
+    // PUSH PRETTY URL
+    const newPath = '/@' + user;
+    if (window.location.protocol !== 'file:' && window.location.pathname !== newPath) {
+        window.history.pushState({ path: newPath }, '', newPath);
+    }
 }
 
 function getRankBadge(user) {
@@ -1363,9 +1395,10 @@ function closeEdit() { document.getElementById('modal-edit').style.display = 'no
 function closePlayer() { 
     document.getElementById('player-page').style.display = 'none'; 
     document.getElementById('p-target').innerHTML = ""; 
-    // Clear URL when closing
-    const newUrl = window.location.origin + window.location.pathname;
-    window.history.pushState({ path: newUrl }, '', newUrl);
+    if (window.location.protocol !== 'file:') {
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    }
 }
 
 async function pinVideo(id) {
@@ -1846,3 +1879,21 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
 });
 // Global alias to prevent "playVideo is not defined" errors during transition
 const playVideo = openVideo;
+
+function shareVideo(e, id) {
+    if (e) e.stopPropagation();
+    const v = allVideos.find(x => x.id == id);
+    if (!v) return;
+    const slug = v.video_id || v.id;
+    const url = window.location.origin + '/v/' + slug;
+    
+    if (navigator.share) {
+        navigator.share({ title: v.title, url: url }).catch(() => {
+            navigator.clipboard.writeText(url);
+            alert("Link copied to clipboard!");
+        });
+    } else {
+        navigator.clipboard.writeText(url);
+        alert("Link copied to clipboard!");
+    }
+}

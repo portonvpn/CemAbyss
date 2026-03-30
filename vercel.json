@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/@:u", "destination": "/api/v?u=:u" },
+    { "source": "/v/:v", "destination": "/api/v?v=:v" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
