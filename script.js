@@ -883,8 +883,7 @@ async function addComment() {
         }
         activeVideo.comments = JSON.stringify(arr);
         document.getElementById('com-input').value = "";
-        activeReplyId = null;
-        document.getElementById('com-input').placeholder = "Add a public comment...";
+        cancelReply();
         loadComments();
     }
 }
