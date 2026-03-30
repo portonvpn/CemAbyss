@@ -1443,44 +1443,37 @@ function renderAdminLogs() {
     }
 }
 
-// Safe Initialization
-try {
-    document.getElementById('nav-bar').style.display = 'flex';
-    document.getElementById('main-area').style.display = 'block';
+document.getElementById('nav-bar').style.display = 'flex';
+document.getElementById('main-area').style.display = 'block';
 
-    if (currentUser) {
-        if (DEV_USERS.includes(currentUser)) {
-            const adminNav = document.getElementById('admin-nav-item');
-            if (adminNav) adminNav.style.display = 'flex';
-        }
-        fetchData();
-    } else {
-        fetchData();
+if (currentUser) {
+    if (DEV_USERS.includes(currentUser)) {
+        const adminNav = document.getElementById('admin-nav-item');
+        if (adminNav) adminNav.style.display = 'flex';
     }
-
-    // Global Navigation Restoration
-    document.querySelectorAll('.side-item, .nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const ctx = item.getAttribute('data-ctx');
-            if (ctx) setContext(ctx, item);
-        });
-    });
-} catch (e) {
-    console.error("Init Error:", e);
+    fetchData();
+} else {
+    fetchData();
 }
+
+// Global Navigation Restoration
+document.querySelectorAll('.side-item, .nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+        const ctx = item.getAttribute('data-ctx');
+        if (ctx) setContext(ctx, item);
+    });
+});
 
 function switchTo(v) {
-    try { setContext(v, document.querySelector(`.side-item[data-ctx="${v}"], .nav-item[data-ctx="${v}"]`)); } catch(e){}
+    setContext(v, document.querySelector(`.side-item[data-ctx="${v}"], .nav-item[data-ctx="${v}"]`));
 }
 
-try {
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-            const newPassword = prompt("Enter your NEW password:");
-            if (!newPassword) return alert("Password update cancelled.");
-            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
-            if (error) alert(error.message);
-            else { alert("Password successfully updated. You can now login."); logout(); }
-        }
-    });
-} catch(e) { console.error("Auth Listener Error:", e); }
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+        const newPassword = prompt("Enter your NEW password:");
+        if (!newPassword) return alert("Password update cancelled.");
+        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        if (error) alert(error.message);
+        else { alert("Password successfully updated. You can now login."); logout(); }
+    }
+});
