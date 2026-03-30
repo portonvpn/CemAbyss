@@ -466,6 +466,12 @@ function renderAdminLogs() {
             <i style="color:var(--text-dim)">${a.details}</i>
         </div>`;
     }).join('') || "No administrative actions found.";
+
+    const b = (allSettings || []).find(x => x.id === 'banner');
+    if (b && b.data && document.getElementById('admin-banner-text')) {
+        document.getElementById('admin-banner-text').value = b.data.text || '';
+        document.getElementById('admin-banner-color').value = b.data.color || '#e11d48';
+    }
 }
 
 function searchAdminUser() {
@@ -508,8 +514,37 @@ function searchAdminUser() {
                 </select>
                 <button class="primary-btn" style="width:auto; padding:0 20px;" onclick="assignRankToUser('${p.username}')">Assign</button>
             </div>
+            <h4 style="margin-top:15px; border-top:1px solid var(--border); padding-top:15px; color:#e11d48;">⚠️ Force Reset Password</h4>
+            <p style="font-size:12px; color:gray; margin-top:-10px; margin-bottom:10px;">Set a new password for the user. Requires the admin secret key.</p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input type="password" id="admin-new-pass" placeholder="New Password..." style="margin-bottom:0; flex:1; min-width:140px;">
+                <input type="password" id="admin-key-input" placeholder="Admin Key..." style="margin-bottom:0; flex:1; min-width:140px;">
+                <button class="primary-btn" style="width:auto; padding:8px 16px; background:#e11d48;" onclick="adminResetPassword('${p.username}')">Set Password</button>
+            </div>
         </div>
     `;
+}
+
+async function adminResetPassword(user) {
+    const key = document.getElementById('admin-key-input').value;
+    const newPass = document.getElementById('admin-new-pass').value;
+    
+    if (key !== 'theyarecem') return alert("Invalid Admin Key!");
+    if (!newPass) return alert("Please specify a new password.");
+
+    const p = allProfiles.find(x => x.username === user);
+    if (!p) return alert("User not found.");
+
+    if (p.email_lookup) {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(p.email_lookup);
+        if (error) {
+            alert("Error sending reset email: " + error.message);
+        } else {
+            alert("A password reset email was sent directly to " + user + "'s email. This is the secure way to reset someone's password in Supabase.");
+        }
+    } else {
+        alert("User does not have a linked email to send the reset to.");
+    }
 }
 
 async function assignRankToUser(u) {
@@ -1068,7 +1103,7 @@ function openProfile(user) {
 
     // Profile Music
     if (p.music_url) {
-        profileAudio = new Audio(p.music_url); profileAudio.volume = 0.5;
+        profileAudio = new Audio(p.music_url); profileAudio.volume = 0.15; // Normalized to 15% to protect ears
         profileAudio.play().catch(() => {
             document.addEventListener('click', () => { if(profileAudio && profileAudio.paused) profileAudio.play(); }, {once:true});
         });
@@ -1608,17 +1643,7 @@ function renderSettings() {
     if (grid) grid.innerHTML = themeHtml;
 }
 
-function renderAdminLogs() {
-    document.getElementById('admin-audit-log').innerHTML = allAudit.map(a => {
-        return `<div>[${new Date(a.created_at).toLocaleString()}] <strong style="color:var(--text)">${a.admin_user}</strong> executed <strong style="color:var(--primary)">${a.action}</strong> on ${a.target}: <span>${a.details}</span></div>`;
-    }).join('') || "No logs found.";
-
-    const b = allSettings.find(x => x.id === 'banner');
-    if (b && b.data && document.getElementById('admin-banner-text')) {
-        document.getElementById('admin-banner-text').value = b.data.text || '';
-        document.getElementById('admin-banner-color').value = b.data.color || '#e11d48';
-    }
-}
+// Rogue redundant duplicate removed to prevent blank admin screen (all logic merged into line 456)
 
 
 if (currentUser && DEV_USERS.includes(currentUser)) {
