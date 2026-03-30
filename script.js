@@ -1158,13 +1158,15 @@ function renderProfile(u) {
     if (!p) return;
 
     let socHtml = '';
-    const d = p.data || {};
-    if (d.yt) socHtml += `<a href="https://www.youtube.com/${d.yt.startsWith('@') ? d.yt : '@'+d.yt}" target="_blank"><img src="youtube.png" class="social-link-icon"></a>`;
-    if (d.ig) socHtml += `<a href="https://www.instagram.com/${d.ig}/" target="_blank"><img src="instagram.png" class="social-link-icon"></a>`;
-    if (d.tiktok) socHtml += `<a href="https://www.tiktok.com/${d.tiktok.startsWith('@') ? d.tiktok : '@'+d.tiktok}" target="_blank"><img src="tiktok.png" class="social-link-icon"></a>`;
-    if (d.discord) socHtml += `<img src="discord.png" class="social-link-icon" onclick="alert('Discord: ${d.discord}')" title="${d.discord}">`;
+    let soc = p.social_links || {};
+    if (typeof soc === 'string') try { soc = JSON.parse(soc); } catch(e){soc={};}
 
-    const galaxyClass = p.unlocked_themes?.includes('galaxy_active') ? 'galaxy-profile' : '';
+    if (soc.yt) socHtml += `<a href="https://www.youtube.com/${soc.yt.startsWith('@') ? soc.yt : '@'+soc.yt}" target="_blank"><img src="youtube.png" class="social-link-icon"></a>`;
+    if (soc.ig) socHtml += `<a href="https://www.instagram.com/${soc.ig}/" target="_blank"><img src="instagram.png" class="social-link-icon"></a>`;
+    if (soc.tiktok) socHtml += `<a href="https://www.tiktok.com/${soc.tiktok.startsWith('@') ? soc.tiktok : '@'+soc.tiktok}" target="_blank"><img src="tiktok.png" class="social-link-icon"></a>`;
+    if (soc.discord) socHtml += `<img src="discord.png" class="social-link-icon" onclick="alert('Discord: ${soc.discord}')" style="cursor:help;">`;
+
+    const galaxyClass = (p.unlocked_themes || []).includes('galaxy_active') ? 'galaxy-profile' : '';
 
     return `
         <div class="video-card ${galaxyClass}" style="padding:15px; text-align:center;">
@@ -1284,6 +1286,7 @@ async function deleteAnnouncement(id) {
 }
 
 const MARKET_THEMES = [
+    { id: 'galaxy', name: 'Elite Galaxy Bundle', price: 2500, color: 'linear-gradient(to bottom, #a855f7, #6441a5)' },
     { id: 'creamy', name: 'Creamy Gold', price: 1000, color: '#d4a373' },
     { id: 'tropical', name: 'Animated Tropical', price: 2500, color: 'linear-gradient(135deg, #f15bb5, #fee440)' },
     { id: 'rainbow', name: 'Animated Rainbow', price: 5000, color: 'linear-gradient(45deg,red,orange,yellow,green,blue,purple)' },
@@ -1298,8 +1301,9 @@ function renderMarketplace() {
     let html = '';
     MARKET_THEMES.forEach(t => {
         const isOwned = unlocked.includes(t.id);
-        html += `<div class="theme-item" style="border-top:4px solid ${t.color.includes('gradient') ? '#fff' : t.color}">
-            <h3 style="margin-top:0">${t.name}</h3>
+        const style = t.id === 'galaxy' ? `border:2px solid #a855f7; background:rgba(168, 85, 247, 0.1);` : `border-top:4px solid ${t.color.includes('gradient') ? '#fff' : t.color};`;
+        html += `<div class="theme-item" style="${style} padding:20px; border-radius:12px; text-align:center;">
+            <h3 style="margin-top:0">${t.id === 'galaxy' ? '🌌 ' : ''}${t.name}</h3>
             ${isOwned ?
                 `<button class="primary-btn" style="background:#222; cursor:default">Purchased</button>` :
                 `<button class="primary-btn" onclick="buyTheme('${t.id}', ${t.price})">Buy for 🪙 ${t.price}</button>`
@@ -1308,14 +1312,7 @@ function renderMarketplace() {
     });
     document.getElementById('market-grid').innerHTML = html;
 
-    let setHtml = `
-      <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default</div>
-      <div class="theme-btn" style="background:#e11d48" onclick="setTheme('midnight-red')">Midnight Red</div>
-      <div class="theme-btn" style="background:#0ea5e9" onclick="setTheme('ocean')">Ocean Blue</div>
-      <div class="theme-btn" style="background:#10b981" onclick="setTheme('forest')">Forest Green</div>
-      <div class="theme-btn" style="background:#f59e0b" onclick="setTheme('eclipse')">Eclipse Orange</div>
-      <div class="theme-btn" style="background:#6366f1" onclick="setTheme('abyss')">Deep Abyss</div>
-    `;
+    let setHtml = `<div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default (Purple)</div>`;
     MARKET_THEMES.forEach(t => {
         if (unlocked.includes(t.id)) {
             setHtml += `<div class="theme-btn" style="background:${t.color}" onclick="setTheme('${t.id}')">${t.name}</div>`;
@@ -1359,13 +1356,13 @@ async function buyTheme(tid, price) {
 
 async function saveSocials() {
     if (!currentUser) return;
-    const p = allProfiles.find(x => x.username === currentUser);
-    const d = p.data || {};
-    d.yt = document.getElementById('set-yt').value.trim();
-    d.discord = document.getElementById('set-discord').value.trim();
-    d.ig = document.getElementById('set-ig').value.trim();
-    d.tiktok = document.getElementById('set-tiktok').value.trim();
-    await supabaseClient.from('profiles').update({ data: d }).eq('username', currentUser);
+    const soc = {
+        yt: document.getElementById('set-yt').value.trim(),
+        discord: document.getElementById('set-discord').value.trim(),
+        ig: document.getElementById('set-ig').value.trim(),
+        tiktok: document.getElementById('set-tiktok').value.trim()
+    };
+    await supabaseClient.from('profiles').update({ social_links: soc }).eq('username', currentUser);
     fetchData(); alert("Socials updated!");
 }
 
@@ -1402,119 +1399,36 @@ async function saveBanner() {
     btn.innerText = "Upload Banner"; btn.disabled = false; document.getElementById('set-banner').value = '';
 }
 
-async function saveVibe() {
-    const glow = document.getElementById('set-glow').value;
-    const font = document.getElementById('set-font').value;
-    await supabaseClient.from('profiles').update({ profile_glow: glow, profile_font: font }).eq('username', currentUser);
-    fetchData(); alert("Vibe Settings Saved!");
-}
-
-async function saveEliteVibe() {
-    let music = document.getElementById('set-music').value.trim();
-    const musicFile = document.getElementById('set-music-file').files[0];
-    const border = document.getElementById('set-border').value;
-    const socials = {
-        discord: document.getElementById('set-social-discord').value.trim(),
-        twitter: document.getElementById('set-social-twitter').value.trim(),
-        github: document.getElementById('set-social-github').value.trim(),
-        yt: document.getElementById('set-social-yt').value.trim()
-    };
-    
-    const selectedBadges = [];
-    document.querySelectorAll('.badge-chk:checked').forEach(c => selectedBadges.push(c.value));
-
-    // Handle Music Upload
-    if (musicFile) {
-        const fd = new FormData(); fd.append('file', musicFile); fd.append('upload_preset', UPLOAD_PRESET);
-        try {
-            const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd });
-            const d = await r.json();
-            if (d.secure_url) music = d.secure_url;
-        } catch (e) { console.error("Music Upload Error:", e); }
-    }
-
-    await supabaseClient.from('profiles').update({ 
-        music_url: music, 
-        profile_border: border, 
-        social_links: JSON.stringify(socials),
-        badges: JSON.stringify(selectedBadges)
-    }).eq('username', currentUser);
-    
-    document.getElementById('set-music-file').value = '';
-    fetchData(); alert("Elite Vibe Updated!");
-}
-
-let profileAudio = null;
-const BADGE_LIST = ["💎","🏆","👑","🔥","⭐","✨","🦄","🎮","🎧","📷","💻","🌍","🚀","🛸","🌌","🗿","🎭","🎨","🍕","🍩","🐉","🦈","👻","💀","👽","🤖","🦾","🌈","☀️","🍀","💎","🔮","🌀","⚡","🩸","🧿","🧸","🛡️","⚔️","🪓","🏹","💰","💎","📀","📼","💾","📡","🔭","🧪","🧬","💊","🧪","🧨","💊","🔮","🧸","💎","👑","🔥","🌌","🪐","🍄","🐲","🦉","🦁","🐯","🐺","🦊","🧊","🌋","🏔️","🏜️","🏖️","🗺️","🧭","⌛","⏳","🧿","🎴","🎭","🎬","🎥","📸","📼","📟","📻","🏮","🎏","🪬","🧿","🪩","💃","🕺","✨","💥","💨","🌀","🔱","☯️","🕉️","☪️","☮️","🕎","🔯","♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓","🪐","🍀","🍄","🌵","🌲","🌴","🌻","🌑","🌪️","🌊","🌩️"];
-
 function renderSettings() {
     const p = allProfiles.find(x => x.username === currentUser);
-    if (p) {
-        document.getElementById('set-name').value = p.display_name || '';
-        document.getElementById('set-bio').value = p.bio || '';
-        
-        const d = p.data || {};
-        const sy = document.getElementById('set-yt'), sd = document.getElementById('set-discord'), sig = document.getElementById('set-ig'), st = document.getElementById('set-tiktok');
-        if (sy) sy.value = d.yt || '';
-        if (sd) sd.value = d.discord || '';
-        if (sig) sig.value = d.ig || '';
-        if (st) st.value = d.tiktok || '';
-
-        // Galaxy Visibility
-        const gCard = document.getElementById('settings-galaxy-card');
-        if (gCard) gCard.style.display = (p.unlocked_themes || []).includes('galaxy') ? 'block' : 'none';
-    }
-
-    if (document.getElementById('set-glow')) document.getElementById('set-glow').value = p.profile_glow || '#a855f7';
-    if (document.getElementById('set-font')) document.getElementById('set-font').value = p.profile_font || 'inherit';
+    if (!p) return;
     
-    if (document.getElementById('set-music')) document.getElementById('set-music').value = p.music_url || '';
-    if (document.getElementById('set-border')) document.getElementById('set-border').value = p.profile_border || 'border-none';
+    document.getElementById('set-name').value = p.display_name || '';
+    document.getElementById('set-bio').value = p.bio || '';
+    document.getElementById('set-music').value = p.music_url || '';
+
+    let soc = p.social_links || {};
+    if (typeof soc === 'string') try { soc = JSON.parse(soc); } catch(e){soc={};}
     
-    const s = p.social_links ? JSON.parse(p.social_links) : {};
-    if (document.getElementById('set-social-discord')) document.getElementById('set-social-discord').value = s.discord || '';
-    if (document.getElementById('set-social-twitter')) document.getElementById('set-social-twitter').value = s.twitter || '';
-    if (document.getElementById('set-social-github')) document.getElementById('set-social-github').value = s.github || '';
-    if (document.getElementById('set-social-yt')) document.getElementById('set-social-yt').value = s.yt || '';
+    document.getElementById('set-yt').value = soc.yt || '';
+    document.getElementById('set-discord').value = soc.discord || '';
+    document.getElementById('set-ig').value = soc.ig || '';
+    document.getElementById('set-tiktok').value = soc.tiktok || '';
 
-    const bGrid = document.getElementById('set-badges-grid');
-    if (bGrid && !bGrid.innerHTML) {
-        const ownedBadges = p.badges ? JSON.parse(p.badges) : [];
-        bGrid.innerHTML = BADGE_LIST.map((b, i) => `
-            <div style="display:flex; align-items:center; justify-content:center; position:relative;">
-                <input type="checkbox" class="badge-chk" value="${b}" id="bad-${i}" ${ownedBadges.includes(b) ? 'checked' : ''} style="position:absolute; opacity:0; cursor:pointer; inset:0;">
-                <label for="bad-${i}" style="font-size:24px; cursor:pointer;">${b}</label>
-            </div>
-        `).join('');
-    }
+    // Galaxy Visibility
+    const gCard = document.getElementById('settings-galaxy-card');
+    if (gCard) gCard.style.display = (p.unlocked_themes || []).includes('galaxy') ? 'block' : 'none';
 
-    let html = `
-        <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default Purple</div>
-        <div class="theme-btn" style="background:#e11d48" onclick="setTheme('midnight-red')">Midnight Red</div>
-        <div class="theme-btn" style="background:#0ea5e9" onclick="setTheme('ocean')">Ocean Blue</div>
-        <div class="theme-btn" style="background:#10b981" onclick="setTheme('forest')">Forest Green</div>
-        <div class="theme-btn" style="background:#f59e0b" onclick="setTheme('eclipse')">Eclipse Orange</div>
-        <div class="theme-btn" style="background:#6366f1" onclick="setTheme('abyss')">Deep Abyss</div>
-    `;
-
-    let myThemes = [];
-    if (p.unlocked_themes) {
-        if (typeof p.unlocked_themes === 'string') myThemes = JSON.parse(p.unlocked_themes);
-        else myThemes = p.unlocked_themes;
-    }
-
+    // Themes Grid (Owned)
+    let unlocked = p.unlocked_themes || [];
+    let themeHtml = `<div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default Purple</div>`;
     MARKET_THEMES.forEach(t => {
-        if (myThemes.includes(t.id) || DEV_USERS.includes(currentUser)) {
-            if (t.id === 'frutiger') {
-                html += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold; color:#000" onclick="setTheme('${t.id}'); document.getElementById('modal-frutiger').style.display='flex'">★ ${t.name}</div>`;
-            } else {
-                html += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold; color:${t.id === 'creamy' ? '#000' : '#fff'}" onclick="setTheme('${t.id}')">★ ${t.name}</div>`;
-            }
+        if (unlocked.includes(t.id) && t.id !== 'galaxy') {
+            themeHtml += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold;" onclick="setTheme('${t.id}')">★ ${t.name}</div>`;
         }
     });
-
     const grid = document.getElementById('my-themes-grid');
-    if (grid) grid.innerHTML = html;
+    if (grid) grid.innerHTML = themeHtml;
 }
 
 function renderAdminLogs() {
