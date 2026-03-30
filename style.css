@@ -158,30 +158,39 @@ button.primary-btn { width: 100%; padding: 16px; background: var(--primary); col
 @keyframes border-flicker { 0% { opacity: 0.8; } 100% { opacity: 1; } }
 .border-glass { border: 2px solid rgba(255,255,255,0.8); box-shadow: inset 0 0 10px white; }
 
-/* Galaxy Theme Architecture */
+/* Elite Galaxy Theme Architecture */
 .galaxy-rank, .galaxy-profile { 
-    background: radial-gradient(circle at 50% 50%, #6441a5, #2a0845) !important; 
-    border: 1px solid rgba(255,255,255,0.4) !important; 
-    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6)) !important;
+    background: radial-gradient(circle at 50% 50%, #2a0845, #000) !important; 
+    border: 2px solid rgba(168, 85, 247, 0.4) !important; 
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.4), inset 0 0 50px rgba(100, 65, 165, 0.3) !important;
     color: #fff !important;
     position: relative;
     overflow: hidden;
 }
-.galaxy-rank::before, .galaxy-profile::before,
+.galaxy-rank::before, .galaxy-profile::before {
+    content: ""; position: absolute; inset: 0;
+    background: url('https://www.transparenttextures.com/patterns/stardust.png');
+    opacity: 0.3; pointer-events: none;
+}
+/* Twinkling Stars */
 .galaxy-rank::after, .galaxy-profile::after {
-    content: "✨"; position: absolute; font-size: 10px; opacity: 0; animation: twinkle 3s infinite;
+    content: "✨"; position: absolute; top: 10%; right: 10%; font-size: 14px;
+    animation: galaxy-twinkle 3s infinite; opacity: 0; pointer-events: none;
 }
-.galaxy-rank::before, .galaxy-profile::before { top: 15%; left: 15%; animation-delay: 0s; }
-.galaxy-rank::after, .galaxy-profile::after { bottom: 20%; right: 25%; animation-delay: 1.5s; }
-
-.social-link-icon {
-    width: 24px; height: 24px; cursor: pointer; transition: 0.3s; 
-    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
+/* Shooting Star Animation */
+@keyframes shooting-star {
+    0% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: translateX(400px) translateY(400px) scale(0); opacity: 0; }
 }
-.social-link-icon:hover { transform: scale(1.2) rotate(5deg); filter: drop-shadow(0 0 8px var(--primary)); }
-@keyframes twinkle {
-    0%, 100% { opacity: 0; transform: scale(0.5); }
-    50% { opacity: 1; transform: scale(1.1); }
+.galaxy-rank[data-shooting="true"]::before, .galaxy-profile[data-shooting="true"]::before {
+    content: ""; position: absolute; top: -50px; left: -50px; width: 2px; height: 100px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
+    transform: rotate(45deg); animation: shooting-star 4s infinite linear;
+}
+@keyframes galaxy-twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); filter: blur(0px); }
+    50% { opacity: 1; transform: scale(1.2); filter: blur(1px); }
 }
 
 .rank-tag, .badge, .dev-badge, [class*="rank-badge-"] {

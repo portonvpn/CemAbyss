@@ -1194,9 +1194,10 @@ function renderProfile(u) {
     if (soc.discord) socHtml += `<img src="discord.png" class="social-link-icon" onclick="alert('Discord: ${soc.discord}')" style="cursor:help;">`;
 
     const galaxyClass = (p.unlocked_themes || []).includes('galaxy_active') ? 'galaxy-profile' : '';
+    const shooting = galaxyClass ? 'data-shooting="true"' : '';
 
     return `
-        <div class="video-card ${galaxyClass}" style="padding:15px; text-align:center;">
+        <div class="video-card ${galaxyClass}" ${shooting} style="padding:15px; text-align:center;">
             <div class="v-avatar" style="width:80px; height:80px; font-size:32px; margin:0 auto 10px; ${getAvatarStyle(p.username)}">${p.username[0]}</div>
             ${formatName(p.username)}
             <p style="font-size:12px; color:var(--text-dim); margin-top:10px;">${p.bio || 'No bio yet.'}</p>
@@ -1454,7 +1455,14 @@ function renderSettings() {
 
     // Themes Grid (Owned)
     let unlocked = p.unlocked_themes || [];
-    let themeHtml = `<div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default Purple</div>`;
+    let themeHtml = `
+        <div class="theme-btn" style="background:#a855f7" onclick="setTheme('default')">Default (Purple)</div>
+        <div class="theme-btn" style="background:#e11d48" onclick="setTheme('midnight-red')">Midnight Red</div>
+        <div class="theme-btn" style="background:#0ea5e9" onclick="setTheme('ocean')">Ocean Blue</div>
+        <div class="theme-btn" style="background:#10b981" onclick="setTheme('forest')">Forest Green</div>
+        <div class="theme-btn" style="background:#f59e0b" onclick="setTheme('eclipse')">Eclipse Orange</div>
+        <div class="theme-btn" style="background:#6366f1" onclick="setTheme('abyss')">Deep Abyss</div>
+    `;
     MARKET_THEMES.forEach(t => {
         if (unlocked.includes(t.id) && t.id !== 'galaxy') {
             themeHtml += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold;" onclick="setTheme('${t.id}')">★ ${t.name}</div>`;
