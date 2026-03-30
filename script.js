@@ -493,12 +493,17 @@ function updateRankCSS() {
             color: ${d.badgeTextColor || 'white'};
             border-radius: 999px; position: relative; z-index: 999; vertical-align: middle;
             ${ (d.badgeBg && d.badgeBg.includes('gradient') && d.nameMoving) ? `background-size: 200% 200%; animation: rankBGMove 3s ease infinite;` : '' }
+            will-change: transform;
         }\n`;
         css += `.rank-badge-${rank.id}::before {
             content: ""; position: absolute; inset: -5px; border-radius: inherit;
             background: inherit; filter: blur(${d.badgeGlowSize || 10}px); opacity: 0.8; z-index: -1;
             ${d.badgeGlow ? `background: ${d.badgeGlow};` : ''}
             pointer-events: none;
+        }\n`;
+        css += `@media (max-width: 900px) {
+            .rank-badge-${rank.id}::before { filter: blur(${Math.max(2, (d.badgeGlowSize || 10) / 2)}px) !important; opacity: 0.5; inset: -2px; }
+            .rank-name-${rank.id} { filter: none !important; }
         }\n`;
     });
     let s = document.getElementById('dynamic-ranks');
@@ -1096,16 +1101,27 @@ async function addComment() {
     
     const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(existing) }).eq('id', activeVideo.id);
     if (!error) {
-        activeVideo.comments = existing; inp.value = ''; cancelReply(); loadComments();
+    const commentContent = inp.value;
+    activeVideo.comments = existing; inp.value = ''; cancelReply(); loadComments();
 
-        // Notifications
-        if (activeVideo.uploader !== currentUser) {
-            pushNotif(activeVideo.uploader, activeReplyId ? 'replied' : 'commented', activeVideo.id, newId);
-        }
+    // Notifications
+    if (activeVideo.uploader !== currentUser) {
+        pushNotif(activeVideo.uploader, activeReplyId ? 'reply' : 'comment', { 
+            videoId: activeVideo.id, 
+            commentId: newId, 
+            content: commentContent, 
+            videoTitle: activeVideo.title 
+        });
+    }
         if (activeReplyId) {
             const parent = existing.find(c => c.id == activeReplyId);
             if (parent && parent.user !== currentUser && parent.user !== activeVideo.uploader) {
-                pushNotif(parent.user, 'replied', activeVideo.id, newId);
+                pushNotif(parent.user, 'reply', { 
+                    videoId: activeVideo.id, 
+                    commentId: newId, 
+                    content: commentContent,
+                    videoTitle: activeVideo.title
+                });
             }
         }
     }
@@ -1672,11 +1688,13 @@ async function pushNotif(target, type, data) {
     const p = allProfiles.find(x => x.username === target);
     if (!p) return;
 
-    // Check Sender's Privacy for Like/Sub
-    if (type === 'like' || type === 'sub') {
-        const sender = allProfiles.find(x => x.username === currentUser);
-        if (sender && sender.is_anonymous) data.anon = true;
-    }
+    // Smart data injection
+    if (typeof data !== 'object') data = { videoId: data };
+    if (!data.from) data.from = currentUser;
+
+    // Privacy Check
+    const sender = allProfiles.find(x => x.username === currentUser);
+    if (sender && sender.is_anonymous && (type === 'like' || type === 'sub')) data.anon = true;
 
     const notifs = p.notifications ? (typeof p.notifications === 'string' ? JSON.parse(p.notifications) : p.notifications) : [];
     notifs.push({ id: Date.now(), type, data, seen: false });
