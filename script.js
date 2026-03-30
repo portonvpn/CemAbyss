@@ -811,9 +811,13 @@ function loadComments() {
     const list = document.getElementById('comments-list');
     let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
     
-    // Sort into a hierarchy
-    const parents = arr.filter(c => !c.parentId);
-    const children = arr.filter(c => c.parentId);
+    // Give legacy comments a fallback id
+    arr = arr.map((c, i) => ({ ...c, id: c.id || `legacy-${i}` }));
+
+    // Treat parentId: null, undefined, "undefined", "null" all as top-level
+    const isParent = c => !c.parentId || c.parentId === 'undefined' || c.parentId === 'null';
+    const parents = arr.filter(c => isParent(c));
+    const children = arr.filter(c => !isParent(c));
 
     list.innerHTML = parents.reverse().map(p => `
         <div class="comment-item" id="comment-${p.id}">
@@ -870,7 +874,7 @@ async function addComment() {
     if (!txt) return;
 
     let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
-    const newCom = { id: Date.now(), user: currentUser, text: txt, parentId: activeReplyId };
+    const newCom = { id: Date.now(), user: currentUser, text: txt, parentId: activeReplyId || null };
     arr.push(newCom);
 
     const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
