@@ -94,8 +94,21 @@
                 style="width:100%; max-width:400px; margin-bottom:0; height:40px; background:rgba(0,0,0,0.5); border-radius:100px; padding:0 20px;">
         </div>
         <div style="display:flex; align-items:center; gap:15px; flex-shrink:0;">
-            <div id="nav-user-area" style="display:none; align-items:center; gap:15px;">
-                <div id="u-coins" class="coin-chip">🪙 0</div>
+            <div id="nav-user-area" style="display:none; align-items:center; gap:20px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div id="u-coins" class="coin-chip">🪙 0</div>
+                    <div style="position:relative; cursor:pointer;" onclick="toggleNotifs()">
+                        <img src="notif.png" style="width:24px; height:24px; filter:invert(1);">
+                        <div id="notif-badge" style="display:none; position:absolute; top:-5px; right:-5px; background:#e11d48; color:white; font-size:10px; font-weight:900; min-width:16px; height:16px; border-radius:10px; padding:0 4px; align-items:center; justify-content:center; border:2px solid black;">0</div>
+                        <div id="notif-dropdown" class="dropdown" style="width:320px; right:0; top:40px; border-radius:16px; overflow:hidden; padding:0;">
+                            <div style="background:var(--card); border-bottom:1px solid var(--border); padding:12px 16px; font-weight:800; display:flex; justify-content:space-between; align-items:center;">
+                                <span>Notifications</span>
+                                <span style="font-size:10px; color:var(--primary); cursor:pointer;" onclick="clearNotifs(event)">Clear All</span>
+                            </div>
+                            <div id="notif-list" style="max-height:400px; overflow-y:auto; background:var(--bg);"></div>
+                        </div>
+                    </div>
+                </div>
                 <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openProfile(currentUser)">
                     <div id="u-name-display" style="font-weight:800; font-size:14px;"></div>
                     <div id="nav-avatar" class="v-avatar"></div>
@@ -194,6 +207,13 @@
                     <div>
                         <label style="color:var(--text-dim); font-size:12px;">Music Stream Policy</label>
                         <input type="text" id="set-music" placeholder="Direct MP3 Link...">
+                    </div>
+                    <div>
+                        <label style="color:var(--text-dim); font-size:12px;">Privacy & Activity</label>
+                        <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+                            <input type="checkbox" id="set-anon" style="width:20px; height:20px; margin:0;">
+                            <span style="font-size:13px; color:var(--text-dim);">Anonymize Liked/Subscribed (Hide profile)</span>
+                        </div>
                     </div>
                 </div>
 

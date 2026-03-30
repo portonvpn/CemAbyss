@@ -243,6 +243,14 @@ function updateNav() {
         const av = document.getElementById('nav-avatar');
         av.setAttribute('style', getAvatarStyle(currentUser));
         av.innerText = currentUser[0].toUpperCase();
+
+        const p = allProfiles.find(x => x.username === currentUser);
+        if (p) {
+            const notifs = p.notifications ? (typeof p.notifications === 'string' ? JSON.parse(p.notifications) : p.notifications) : [];
+            const unread = notifs.filter(n => !n.seen).length;
+            updateNotifBadge(unread);
+            if (document.getElementById('u-coins')) document.getElementById('u-coins').innerText = `🪙 ${p.coins || 0}`;
+        }
     } else {
         document.getElementById('nav-user-area').style.display = 'none';
         document.getElementById('nav-login-btn').style.display = 'block';
@@ -801,30 +809,81 @@ async function postComment() {
 
 function loadComments() {
     const list = document.getElementById('comments-list');
-    let arr = activeVideo.comments ? JSON.parse(activeVideo.comments) : [];
+    let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
+    
+    // Sort into a hierarchy
+    const parents = arr.filter(c => !c.parentId);
+    const children = arr.filter(c => c.parentId);
 
-    arr = arr.map((c, idx) => ({ ...c, originalIdx: idx })).reverse();
-
-    const filteredComments = arr.filter(c => {
-        if (DEV_USERS.includes(currentUser) || c.user === currentUser) return true;
-        const p = allProfiles.find(x => x.username === c.user);
-        return !(p && p.is_shadowbanned);
-    });
-
-    list.innerHTML = filteredComments.map(c => `
-        <div class="comment-item">
-            <div class="v-avatar" style="width:32px; height:32px; font-size:12px; ${getAvatarStyle(c.user)}" onclick="openProfile('${c.user}')">${c.user[0]}</div>
+    list.innerHTML = parents.reverse().map(p => `
+        <div class="comment-item" id="comment-${p.id}">
+            <div class="v-avatar" style="width:36px; height:36px; font-size:14px; ${getAvatarStyle(p.user)}" onclick="openProfile('${p.user}')">${p.user[0]}</div>
             <div style="flex:1">
-                <div class="comment-user" onclick="openProfile('${c.user}')">${formatName(c.user)}</div>
-                <div class="comment-text">${c.text}</div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="comment-user" onclick="openProfile('${p.user}')">${formatName(p.user)}</div>
+                    ${p.user === activeVideo.uploader ? '<span style="background:var(--primary); color:white; font-size:9px; padding:2px 4px; border-radius:4px; font-weight:800;">VIDEO OWNER</span>' : ''}
+                </div>
+                <div class="comment-text">${p.text}</div>
+                <div style="display:flex; gap:15px; margin-top:8px;">
+                    <span onclick="openReply('${p.id}', '${p.user}')" style="font-size:11px; color:var(--primary); cursor:pointer; font-weight:800;">Reply</span>
+                    ${(DEV_USERS.includes(currentUser) || p.user === currentUser) ? `<span onclick="deleteComment('${p.id}')" style="color:rgba(255,0,0,0.6); font-size:11px; cursor:pointer;">Delete</span>` : ''}
+                </div>
+                <div id="replies-${p.id}" style="margin-top:10px; border-left: 2px solid var(--border); padding-left:15px;">
+                    ${children.filter(c => c.parentId == p.id).map(c => `
+                        <div class="comment-item" style="margin-top:10px; padding:0;">
+                            <div class="v-avatar" style="width:28px; height:28px; font-size:10px; ${getAvatarStyle(c.user)}" onclick="openProfile('${c.user}')">${c.user[0]}</div>
+                            <div style="flex:1">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div class="comment-user" onclick="openProfile('${c.user}')">${formatName(c.user)}</div>
+                                    ${c.user === activeVideo.uploader ? '<span style="background:var(--primary); color:white; font-size:9px; padding:2px 4px; border-radius:4px; font-weight:800;">VIDEO OWNER</span>' : ''}
+                                </div>
+                                <div class="comment-text"><span style="color:var(--primary); font-weight:700;">@${p.user}</span> ${c.text}</div>
+                                ${(DEV_USERS.includes(currentUser) || c.user === currentUser) ? `<span onclick="deleteComment('${c.id}')" style="color:rgba(255,0,0,0.6); font-size:10px; cursor:pointer; margin-top:5px; display:inline-block;">Delete</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
-            ${(DEV_USERS.includes(currentUser) || c.user === currentUser) ? `<div onclick="deleteComment(${c.originalIdx})" style="color:red; font-size:10px; cursor:pointer">Delete</div>` : ''}
-        </div>`).join('');
+        </div>`).join('') || '<p style="color:gray; text-align:center; padding:20px;">No comments yet. Be the first!</p>';
 }
 
-async function deleteComment(idx) {
+let activeReplyId = null;
+function openReply(id, user) {
+    activeReplyId = id;
+    const inp = document.getElementById('com-input');
+    inp.focus();
+    inp.placeholder = `Replying to @${user}...`;
+}
+
+async function addComment() {
+    if (!currentUser) return openAuth();
+    const txt = document.getElementById('com-input').value.trim();
+    if (!txt) return;
+
+    let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
+    const newCom = { id: Date.now(), user: currentUser, text: txt, parentId: activeReplyId };
+    arr.push(newCom);
+
+    const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
+    if (!error) {
+        if (activeReplyId) {
+            const parent = arr.find(x => x.id == activeReplyId);
+            if (parent && parent.user !== currentUser) pushNotif(parent.user, 'reply', { from: currentUser, content: txt, videoId: activeVideo.id, videoTitle: activeVideo.title });
+        } else if (activeVideo.uploader !== currentUser) {
+            pushNotif(activeVideo.uploader, 'comment', { from: currentUser, content: txt, videoId: activeVideo.id, videoTitle: activeVideo.title });
+        }
+        activeVideo.comments = JSON.stringify(arr);
+        document.getElementById('com-input').value = "";
+        activeReplyId = null;
+        document.getElementById('com-input').placeholder = "Add a public comment...";
+        loadComments();
+    }
+}
+
+async function deleteComment(id) {
+    if (!confirm("Delete this comment?")) return;
     let arr = JSON.parse(activeVideo.comments);
-    arr.splice(idx, 1);
+    arr = arr.filter(c => c.id != id && c.parentId != id);
     await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
     activeVideo.comments = JSON.stringify(arr); loadComments();
 }
@@ -1349,23 +1408,80 @@ function renderMarketplace() {
     document.getElementById('my-themes-grid').innerHTML = setHtml;
 }
 
+async function pushNotif(target, type, data) {
+    if (!target || target === currentUser) return;
+    const p = allProfiles.find(x => x.username === target);
+    if (!p) return;
+
+    // Check Sender's Privacy for Like/Sub
+    if (type === 'like' || type === 'sub') {
+        const sender = allProfiles.find(x => x.username === currentUser);
+        if (sender && sender.is_anonymous) data.anon = true;
+    }
+
+    const notifs = p.notifications ? (typeof p.notifications === 'string' ? JSON.parse(p.notifications) : p.notifications) : [];
+    notifs.push({ id: Date.now(), type, data, seen: false });
+    await supabaseClient.from('profiles').update({ notifications: JSON.stringify(notifs.slice(-50)) }).eq('username', target);
+}
+
+function truncate(str, n = 20) { return (str.length > n) ? str.slice(0, n-1) + "..." : str; }
+
+function toggleNotifs() {
+    const drp = document.getElementById('notif-dropdown');
+    drp.classList.toggle('active');
+    if (drp.classList.contains('active')) renderNotifs();
+}
+
+function renderNotifs() {
+    const list = document.getElementById('notif-list');
+    const p = allProfiles.find(x => x.username === currentUser);
+    if (!p) return;
+    const notifs = p.notifications ? (typeof p.notifications === 'string' ? JSON.parse(p.notifications) : p.notifications) : [];
+    
+    list.innerHTML = notifs.reverse().map(n => {
+        let msg = "";
+        let sender = n.data.anon ? "Anonymous User" : n.data.from;
+        let onClick = n.data.anon ? "" : `onclick="openProfile('${n.data.from}')" style="cursor:pointer; color:var(--primary);"`;
+        
+        if (n.type === 'like') msg = `<b ${onClick}>${sender}</b> liked your video <i>"${truncate(n.data.videoTitle)}"</i>`;
+        if (n.type === 'comment') msg = `<b ${onClick}>${sender}</b> commented: <i>"${truncate(n.data.content, 30)}"</i>`;
+        if (n.type === 'reply') msg = `<b ${onClick}>${sender}</b> replied: <i>"${truncate(n.data.content, 30)}"</i>`;
+        if (n.type === 'sub') msg = `<b ${onClick}>${sender}</b> subscribed to you!`;
+
+        return `<div class="notif-item" style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; line-height:1.4;">
+            ${msg}
+            <div style="font-size:10px; color:gray; margin-top:4px;">${new Date(n.id).toLocaleTimeString()}</div>
+        </div>`;
+    }).join('') || '<div style="padding:40px 20px; text-align:center; color:gray;">All caught up! ✨</div>';
+
+    // Mark as seen
+    updateNotifBadge(0);
+}
+
+async function clearNotifs(e) {
+    e.stopPropagation();
+    if (!confirm("Clear all notifications?")) return;
+    await supabaseClient.from('profiles').update({ notifications: JSON.stringify([]) }).eq('username', currentUser);
+    renderNotifs();
+}
+
+function updateNotifBadge(count) {
+    const b = document.getElementById('notif-badge');
+    if (!b) return;
+    if (count > 0) {
+        b.style.display = 'flex';
+        b.innerText = count > 99 ? '99+' : count;
+    } else {
+        b.style.display = 'none';
+    }
 async function buyTheme(tid, price) {
     const p = allProfiles.find(x => x.username === currentUser);
+    if (!p) return;
     const coins = p.coins || 0;
     if (coins < price) return alert("Not enough CemCoins! Login tomorrow for more.");
-
     if (!confirm(`Buy theme for ${price} coins?`)) return;
 
     let existingThemes = p.unlocked_themes || [];
-    if (typeof existingThemes === 'string') {
-        try {
-            existingThemes = JSON.parse(existingThemes);
-        } catch (e) {
-            console.error("Error parsing unlocked_themes:", e);
-            existingThemes = [];
-        }
-    }
-    existingThemes.push(tid);
 
     const t = MARKET_THEMES.find(theme => theme.id === tid);
     if (!t) return alert("Theme not found.");
@@ -1391,9 +1507,11 @@ async function saveSocials() {
         tiktok: document.getElementById('set-tiktok').value.trim()
     };
     const music = document.getElementById('set-music').value.trim();
+    const anon = document.getElementById('set-anon').checked;
     await supabaseClient.from('profiles').update({ 
         social_links: soc,
-        music_url: music 
+        music_url: music,
+        is_anonymous: anon
     }).eq('username', currentUser);
     fetchData(); alert("Settings updated!");
 }
@@ -1449,6 +1567,8 @@ function renderSettings() {
     if (document.getElementById('set-ig')) document.getElementById('set-ig').value = soc.ig || '';
     if (document.getElementById('set-tiktok')) document.getElementById('set-tiktok').value = soc.tiktok || '';
 
+    if (document.getElementById('set-anon')) document.getElementById('set-anon').checked = !!p.is_anonymous;
+
     // Galaxy Visibility
     const gCard = document.getElementById('settings-galaxy-card');
     if (gCard) gCard.style.display = (p.unlocked_themes || []).includes('galaxy') ? 'block' : 'none';
@@ -1464,8 +1584,8 @@ function renderSettings() {
         <div class="theme-btn" style="background:#6366f1" onclick="setTheme('abyss')">Deep Abyss</div>
     `;
     MARKET_THEMES.forEach(t => {
-        if (unlocked.includes(t.id) && t.id !== 'galaxy') {
-            themeHtml += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold;" onclick="setTheme('${t.id}')">★ ${t.name}</div>`;
+        if (unlocked.includes(t.id)) {
+            themeHtml += `<div class="theme-btn" style="background:${t.color}; border:2px solid gold;" onclick="setTheme('${t.id}')">★ ${t.name} ${t.id === 'galaxy' ? '🌌' : ''}</div>`;
         }
     });
     const grid = document.getElementById('my-themes-grid');
