@@ -1545,6 +1545,13 @@ function closeEdit() { document.getElementById('modal-edit').style.display = 'no
 function closePlayer() { 
     document.getElementById('player-page').style.display = 'none'; 
     document.getElementById('p-target').innerHTML = ""; 
+    
+    const targetView = document.getElementById(`view-${currentCtx === 'studio' || currentCtx === 'imageboard' ? 'home' : (currentCtx === 'profile' ? 'profile' : currentCtx)}`);
+    if (targetView) {
+        targetView.classList.add('active');
+        targetView.style.display = 'block';
+    }
+
     if (window.location.protocol !== 'file:') {
         const fallBackUrl = window.lastUrlBeforeVideo || '/';
         const newUrl = window.location.origin + fallBackUrl;
@@ -2092,12 +2099,22 @@ window.handleCardHover = function(el) {
         const img = el.querySelector('.v-img-prev');
         if (img) img.style.opacity = 0;
         
-        el.style.transition = '0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        el.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
         el._hoverT = setTimeout(() => {
             el.originalZIndex = el.style.zIndex;
-            el.style.transform = 'scale(1.15)';
+            
+            // Smart collision detection for the massive 1.6x scale
+            const rect = el.getBoundingClientRect();
+            let originX = '50%';
+            let originY = '50%';
+            if (rect.left < 100) originX = '5%';
+            else if (window.innerWidth - rect.right < 100) originX = '95%';
+            if (rect.top < 100) originY = '20%'; // Slightly protect top
+            
+            el.style.transformOrigin = `${originX} ${originY}`;
+            el.style.transform = 'scale(1.6)';
             el.style.zIndex = '50';
-            el.style.boxShadow = '0 20px 40px rgba(0,0,0,0.9)';
+            el.style.boxShadow = '0 40px 80px rgba(0,0,0,1)';
         }, 5000); // 5 seconds popup delay
     } catch(e) {}
 };
