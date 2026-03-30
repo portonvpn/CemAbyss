@@ -11,14 +11,15 @@
 
 /* Frutiger Aero Theme */
 [data-theme="frutiger"] { --primary: #00a8ff; --bg: transparent; --card: rgba(255, 255, 255, 0.3); --nav: rgba(255, 255, 255, 0.4); --border: rgba(255, 255, 255, 0.6); --text: #050505; --text-dim: #333333; }
-[data-theme="frutiger"] body { background: url('frutiger.jpg') center/cover fixed; color: #111; }
+[data-theme="frutiger"] body { background: url('frutiger.jpg') center/cover; background-attachment: scroll; color: #111; }
 [data-theme="frutiger"] .card, [data-theme="frutiger"] .settings-card, [data-theme="frutiger"] .modal-box, [data-theme="frutiger"] aside, [data-theme="frutiger"] nav { 
-    -webkit-backdrop-filter: blur(25px) saturate(150%);
-    backdrop-filter: blur(25px) saturate(150%);
-    background: rgba(255, 255, 255, 0.3) !important; 
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+    background: rgba(255, 255, 255, 0.4) !important; 
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 0 15px rgba(255,255,255,0.8);
     color: #111 !important;
     border: 1px solid rgba(255,255,255,0.6) !important;
+    will-change: transform;
 }
 [data-theme="frutiger"] .logo, [data-theme="frutiger"] .glow-text, [data-theme="frutiger"] h1, [data-theme="frutiger"] h2, [data-theme="frutiger"] h3 { color: #050505; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
 [data-theme="frutiger"] .logo span { color: #0088cc; }
@@ -35,10 +36,13 @@
 [data-theme="frutiger"] #player-page { background: rgba(255,255,255,0.4); backdrop-filter: blur(30px); }
 
 @media (max-width: 900px) {
+    [data-theme="frutiger"] body { background-attachment: scroll !important; }
+    .card, .settings-card, .modal-box, aside, nav, .modal-overlay, #player-page { 
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+    }
     [data-theme="frutiger"] .card, [data-theme="frutiger"] .settings-card, [data-theme="frutiger"] .modal-box, [data-theme="frutiger"] aside, [data-theme="frutiger"] nav { 
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-        background: rgba(255, 255, 255, 0.9) !important; 
+        background: rgba(255, 255, 255, 0.8) !important; 
     }
 }
 
@@ -71,9 +75,11 @@ main { margin-left: 240px; margin-top: 64px; padding: 24px; min-height: calc(100
 .card { 
     position: relative; width: 100%; z-index: 5; 
     border-radius: 32px; overflow: hidden; 
-    background: var(--card); /* Give cards a background so the curve is visible */
+    background: var(--card);
     padding: 12px; border: 1px solid var(--border);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    backface-visibility: hidden;
 }
 .card:hover { transform: translateY(-5px); border-color: var(--primary); }
 .video-card {

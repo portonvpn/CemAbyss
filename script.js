@@ -1452,7 +1452,7 @@ function setFrutigerBg(img) {
     document.body.style.backgroundImage = `url('${img}')`;
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundPosition = "center";
-    document.body.style.backgroundAttachment = "fixed";
+    document.body.style.backgroundAttachment = "scroll";
 }
 
 function setTheme(t) {
