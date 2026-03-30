@@ -3,6 +3,14 @@ const DEV_USERS = ["Zoro", "Redtree1222", "redtree"];
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = localStorage.getItem('cem_user'), allVideos = [], allProfiles = [], allRanks = [], allSettings = [], allAudit = [], currentCtx = 'home', authMode = 'login', activeVideo = null, editingId = null;
 
+// Initial UI Boot
+try {
+    const main = document.getElementById('main-area');
+    const nav = document.getElementById('nav-bar');
+    if (main) main.style.display = 'block';
+    if (nav) nav.style.display = 'flex';
+} catch(e) {}
+
 function toggleSidebar() {
     document.getElementById('side-bar').classList.toggle('open');
     document.getElementById('side-overlay').style.display = document.getElementById('side-bar').classList.contains('open') ? 'block' : 'none';
@@ -242,21 +250,40 @@ function updateNav() {
 }
 
 function setContext(ctx, el) {
-    if (profileAudio) { profileAudio.pause(); profileAudio = null; }
-    currentCtx = ctx; document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
-    if (el) el.classList.add('active'); closeSidebar();
-    document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+    if (profileAudio) { try { profileAudio.pause(); profileAudio = null; } catch(e){} }
+    currentCtx = ctx;
+
+    // Reset Sidebar UI
+    document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
+    if (el) el.classList.add('active');
+    try { closeSidebar(); } catch(e){}
+
+    // Hide all views
+    document.querySelectorAll('.page-view').forEach(p => {
+        p.classList.remove('active');
+        p.style.display = 'none';
+    });
+
+    const targetView = document.getElementById(`view-${ctx === 'studio' || ctx === 'imageboard' ? 'home' : ctx}`);
+    if (targetView) {
+        targetView.classList.add('active');
+        targetView.style.display = 'block';
+    }
+
     if (ctx === 'settings') {
-        document.getElementById('view-settings').classList.add('active'); renderSettings();
+        if (!currentUser) return openAuth();
+        renderSettings();
     } else if (ctx === 'admin') {
-        document.getElementById('view-admin').classList.add('active'); renderAdmin();
+        renderAdmin();
     } else if (ctx === 'marketplace') {
-        document.getElementById('view-marketplace').classList.add('active'); renderMarketplace();
+        renderMarketplace();
     } else if (ctx === 'announcements') {
-        document.getElementById('view-announcements').classList.add('active'); renderAnnouncements();
+        renderAnnouncements();
+    } else if (ctx === 'profile') {
+        // Handled by openProfile
     } else {
-        if ((ctx === 'studio' || ctx === 'settings') && !currentUser) return openAuth();
-        document.getElementById('view-home').classList.add('active'); render();
+        if (ctx === 'studio' && !currentUser) return openAuth();
+        render();
     }
 }
 
@@ -1443,20 +1470,10 @@ function renderAdminLogs() {
     }
 }
 
-document.getElementById('nav-bar').style.display = 'flex';
-document.getElementById('main-area').style.display = 'block';
 
-if (currentUser) {
-    if (DEV_USERS.includes(currentUser)) {
-        const adminNav = document.getElementById('admin-nav-item');
-        if (adminNav) adminNav.style.display = 'flex';
-    }
-    fetchData();
-} else {
-    fetchData();
-}
+fetchData();
 
-// Global Navigation Restoration
+// Global Navigation Listeners
 document.querySelectorAll('.side-item, .nav-item').forEach(item => {
     item.addEventListener('click', () => {
         const ctx = item.getAttribute('data-ctx');
@@ -1465,7 +1482,10 @@ document.querySelectorAll('.side-item, .nav-item').forEach(item => {
 });
 
 function switchTo(v) {
-    setContext(v, document.querySelector(`.side-item[data-ctx="${v}"], .nav-item[data-ctx="${v}"]`));
+    try { 
+        const el = document.querySelector(`.side-item[data-ctx="${v}"], .nav-item[data-ctx="${v}"]`);
+        setContext(v, el); 
+    } catch(e){}
 }
 
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
