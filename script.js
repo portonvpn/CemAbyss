@@ -231,8 +231,7 @@ async function fetchData() {
     if (currentCtx === 'admin') renderAdmin(); else if (currentCtx !== 'profile' && currentCtx !== 'announcements' && currentCtx !== 'settings') render();
     if (currentCtx === 'marketplace') renderMarketplace();
     if (currentCtx === 'announcements') renderAnnouncements();
-    if (currentCtx === 'settings') renderSettings();
-    updateNav();
+    if (currentCtx === 'settings') renderSettings();    updateNav();
     handleRouting();
 }
 
@@ -240,16 +239,24 @@ function handleRouting() {
     const params = new URLSearchParams(window.location.search);
     const vId = params.get('v');
     const cId = params.get('c');
+    const tab = params.get('tab');
     
     if (vId) {
         const vid = allVideos.find(x => (x.video_id === vId || x.id == vId));
         if (vid) {
             openVideo(vid.id);
-            if (cId) {
-                // Wait for comments to render then highlight
-                setTimeout(() => highlightComment(cId), 1000);
-            }
+            if (cId) setTimeout(() => highlightComment(cId), 1000);
+            return; // Video routing takes priority
         }
+    }
+
+    if (tab) {
+        // Find sidebar element for this tab
+        const el = document.querySelector(`[onclick*="setContext('${tab}'"]`);
+        if (el) setContext(tab, el);
+    } else {
+        // Default to home if no tab or video specified
+        setContext('home', document.querySelector('.side-item'));
     }
 }
 
@@ -295,6 +302,16 @@ function updateNav() {
 function setContext(ctx, el) {
     if (profileAudio) { try { profileAudio.pause(); profileAudio = null; } catch(e){} }
     currentCtx = ctx;
+
+    // Update URL when switching tabs (if not already there)
+    const currentUrl = new URL(window.location);
+    if (currentUrl.searchParams.get('tab') !== ctx && ctx !== 'home') {
+        const newUrl = window.location.origin + window.location.pathname + '?tab=' + ctx;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    } else if (ctx === 'home' && currentUrl.searchParams.has('tab')) {
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    }
 
     // Reset Sidebar UI
     document.querySelectorAll('.side-item').forEach(i => i.classList.remove('active'));
@@ -441,11 +458,11 @@ function updateRankCSS() {
             ${d.nameMoving ? `background-size: 200% 200%; animation: rankBGMove 3s ease infinite;` : ''}
         }\n`;
         css += `.rank-badge-${rank.id} {
-            padding: 2px 6px; font-size: 10px; font-weight: 800; margin-left: 6px; display: inline-block;
+            padding: 3px 8px; font-size: 10px; font-weight: 900; margin-left: 6px; display: inline-block;
             background: ${d.badgeBg || 'transparent'};
             color: ${d.badgeTextColor || 'white'};
-            border-radius: ${d.badgeBorderRadius || 0}px;
-            filter: drop-shadow(0 0 ${d.badgeGlowSize || 4}px ${d.badgeGlow || 'transparent'}); /* Fixed Boxy Glow with drop-shadow */
+            border-radius: 100px; /* Fixed Boxy Ranks */
+            filter: drop-shadow(0 0 ${d.badgeGlowSize || 4}px ${d.badgeGlow || 'transparent'});
             ${(d.badgeBg && d.badgeBg.includes('gradient') && d.nameMoving) ? `background-size: 200% 200%; animation: rankBGMove 3s ease infinite;` : ''}
         }\n`;
     });
@@ -637,14 +654,14 @@ function updateLivePreview() {
     pName.style.animation = nMoving && nType === 'gradient' ? 'rankBGMove 3s ease infinite' : 'none';
 
     pBadge.style.display = 'inline-block';
-    pBadge.style.padding = '2px 6px';
+    pBadge.style.padding = '3px 8px';
     pBadge.style.fontSize = '10px';
-    pBadge.style.fontWeight = '800';
+    pBadge.style.fontWeight = '900';
     pBadge.style.marginLeft = '6px';
 
     pBadge.innerText = document.getElementById('r-badge-text').value || 'BADGE';
     pBadge.style.color = document.getElementById('r-badge-text-col').value;
-    pBadge.style.borderRadius = (parseInt(document.getElementById('r-badge-root-rad').value) || 0) + 'px';
+    pBadge.style.borderRadius = '100px';
 
     const bType = document.getElementById('r-badge-type').value;
     const bc1 = document.getElementById('r-badge-c1').value;
