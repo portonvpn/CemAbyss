@@ -1471,15 +1471,11 @@ function renderAdminLogs() {
 }
 
 
+if (currentUser && DEV_USERS.includes(currentUser)) {
+    const adminNav = document.getElementById('admin-nav-item');
+    if (adminNav) adminNav.style.display = 'flex';
+}
 fetchData();
-
-// Global Navigation Listeners
-document.querySelectorAll('.side-item, .nav-item').forEach(item => {
-    item.addEventListener('click', () => {
-        const ctx = item.getAttribute('data-ctx');
-        if (ctx) setContext(ctx, item);
-    });
-});
 
 function switchTo(v) {
     try { 
