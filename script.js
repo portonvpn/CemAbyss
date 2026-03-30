@@ -924,12 +924,12 @@ function openProfile(user) {
     document.getElementById('p-bio').innerText = p.bio || 'This user hasn\'t written a bio yet.';
     
     // Socials
-    const socials = p.social_links ? JSON.parse(p.social_links) : {};
+    const socials = p.social_links ? (typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links) : {};
     let sHtml = '';
-    if (socials.discord) sHtml += `<div class="social-icon" title="Discord: ${socials.discord}" style="font-size:32px;">👾</div>`;
-    if (socials.twitter) sHtml += `<div class="social-icon" title="Twitter: ${socials.twitter}" style="font-size:32px;">🐦</div>`;
-    if (socials.github) sHtml += `<div class="social-icon" title="GitHub: ${socials.github}" style="font-size:32px;">📂</div>`;
-    if (socials.yt) sHtml += `<div class="social-icon" title="YouTube" style="font-size:32px;">🎥</div>`;
+    if (socials.yt) sHtml += `<a href="https://www.youtube.com/${socials.yt.startsWith('@') ? socials.yt : '@'+socials.yt}" target="_blank"><img src="youtube.png" class="social-link-icon" style="width:36px; height:36px; transition:0.3s; filter:drop-shadow(0 0 10px rgba(255,0,0,0.3)); cursor:pointer;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></a>`;
+    if (socials.ig) sHtml += `<a href="https://www.instagram.com/${socials.ig}/" target="_blank"><img src="instagram.png" class="social-link-icon" style="width:36px; height:36px; transition:0.3s; filter:drop-shadow(0 0 10px rgba(255,0,255,0.3)); cursor:pointer;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></a>`;
+    if (socials.tiktok) sHtml += `<a href="https://www.tiktok.com/${socials.tiktok.startsWith('@') ? socials.tiktok : '@'+socials.tiktok}" target="_blank"><img src="tiktok.png" class="social-link-icon" style="width:36px; height:36px; transition:0.3s; filter:drop-shadow(0 0 10px rgba(255,255,255,0.3)); cursor:pointer;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></a>`;
+    if (socials.discord) sHtml += `<img src="discord.png" class="social-link-icon" title="Discord: ${socials.discord}" style="width:36px; height:36px; transition:0.3s; filter:drop-shadow(0 0 10px rgba(88,101,242,0.3)); cursor:pointer;" onclick="alert('Discord: ${socials.discord}')" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">`;
     document.getElementById('p-socials').innerHTML = sHtml;
 
     // Stats & Badges
@@ -1283,10 +1283,10 @@ async function saveEliteVibe() {
     const musicFile = document.getElementById('set-music-file').files[0];
     const border = document.getElementById('set-border').value;
     const socials = {
-        discord: document.getElementById('set-social-discord').value.trim(),
-        twitter: document.getElementById('set-social-twitter').value.trim(),
-        github: document.getElementById('set-social-github').value.trim(),
-        yt: document.getElementById('set-social-yt').value.trim()
+        yt: document.getElementById('set-yt').value.trim(),
+        discord: document.getElementById('set-discord').value.trim(),
+        ig: document.getElementById('set-ig').value.trim(),
+        tiktok: document.getElementById('set-tiktok').value.trim()
     };
     
     const selectedBadges = [];
@@ -1328,11 +1328,11 @@ function renderSettings() {
     if (document.getElementById('set-music')) document.getElementById('set-music').value = p.music_url || '';
     if (document.getElementById('set-border')) document.getElementById('set-border').value = p.profile_border || 'border-none';
     
-    const s = p.social_links ? JSON.parse(p.social_links) : {};
-    if (document.getElementById('set-social-discord')) document.getElementById('set-social-discord').value = s.discord || '';
-    if (document.getElementById('set-social-twitter')) document.getElementById('set-social-twitter').value = s.twitter || '';
-    if (document.getElementById('set-social-github')) document.getElementById('set-social-github').value = s.github || '';
-    if (document.getElementById('set-social-yt')) document.getElementById('set-social-yt').value = s.yt || '';
+    const s = p.social_links ? (typeof p.social_links === 'string' ? JSON.parse(p.social_links) : p.social_links) : {};
+    if (document.getElementById('set-discord')) document.getElementById('set-discord').value = s.discord || '';
+    if (document.getElementById('set-yt')) document.getElementById('set-yt').value = s.yt || '';
+    if (document.getElementById('set-ig')) document.getElementById('set-ig').value = s.ig || '';
+    if (document.getElementById('set-tiktok')) document.getElementById('set-tiktok').value = s.tiktok || '';
 
     const bGrid = document.getElementById('set-badges-grid');
     if (bGrid && !bGrid.innerHTML) {
