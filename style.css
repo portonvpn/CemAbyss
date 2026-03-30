@@ -112,7 +112,7 @@ button.primary-btn { width: 100%; padding: 16px; background: var(--primary); col
 }
 .rec-card:hover { background: rgba(255,255,255,0.08); border-color: var(--border); }
 .rec-thumb { width: 140px; aspect-ratio: 16/9; border-radius: 28px; border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; }
-.rec-info { overflow: hidden; }
+.rec-info { overflow: visible; }
 .settings-card { background: var(--card); border: 1px solid var(--border); border-radius: 32px; padding: 24px; margin-bottom: 24px; max-width: 600px; }
 .settings-card h3 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

@@ -406,7 +406,7 @@ function render(target = 'v-grid', list = null) {
             </div>
             <div style="display:flex; gap:12px; margin-top:12px;">
                 <div class="v-avatar" style="${getAvatarStyle(v.uploader)}" onclick="event.stopPropagation(); openProfile('${v.uploader}')">${v.uploader[0]}</div>
-                <div style="flex:1; overflow:hidden;">
+                <div style="flex:1;">
                     <div style="font-weight:700; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" title="${v.title}">${v.title}</div>
                     <div style="font-size:12px; color:var(--text-dim); margin-top:4px; display:flex; align-items:center;">
                         ${formatName(v.uploader)}
@@ -458,12 +458,17 @@ function updateRankCSS() {
             ${d.nameMoving ? `background-size: 200% 200%; animation: rankBGMove 3s ease infinite;` : ''}
         }\n`;
         css += `.rank-badge-${rank.id} {
-            padding: 3px 8px; font-size: 10px; font-weight: 900; margin-left: 6px; display: inline-block;
+            padding: 3px 10px; font-size: 10px; font-weight: 900; margin-left: 6px; display: inline-block;
             background: ${d.badgeBg || 'transparent'};
             color: ${d.badgeTextColor || 'white'};
-            border-radius: 100px; /* Fixed Boxy Ranks */
-            filter: drop-shadow(0 0 ${d.badgeGlowSize || 4}px ${d.badgeGlow || 'transparent'});
-            ${(d.badgeBg && d.badgeBg.includes('gradient') && d.nameMoving) ? `background-size: 200% 200%; animation: rankBGMove 3s ease infinite;` : ''}
+            border-radius: 999px; position: relative; z-index: 999; vertical-align: middle;
+            ${ (d.badgeBg && d.badgeBg.includes('gradient') && d.nameMoving) ? `background-size: 200% 200%; animation: rankBGMove 3s ease infinite;` : '' }
+        }\n`;
+        css += `.rank-badge-${rank.id}::before {
+            content: ""; position: absolute; inset: -5px; border-radius: inherit;
+            background: inherit; filter: blur(${d.badgeGlowSize || 10}px); opacity: 0.8; z-index: -1;
+            ${d.badgeGlow ? `background: ${d.badgeGlow};` : ''}
+            pointer-events: none;
         }\n`;
     });
     let s = document.getElementById('dynamic-ranks');
@@ -938,13 +943,13 @@ function loadComments() {
     const list = document.getElementById('comments-list');
     let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
     
-    arr = arr.map((c, i) => ({ ...c, id: c.id || `legacy-${i}` }));
+    // Ensure all comments have IDs and status
+    arr = arr.map((c, i) => ({ ...c, id: c.id || `legacy-${i}`, isPinned: !!c.isPinned }));
 
-    // Sorting: Pinned first, then newest
-    const sorted = arr.sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return 0; // maintain time order otherwise
+    // STRICT Sorting: Pinned first (1-0), then Newest first (time)
+    const sorted = [...arr].sort((a,b) => {
+        if (b.isPinned !== a.isPinned) return b.isPinned - a.isPinned;
+        return (b.time || 0) - (a.time || 0);
     });
 
     // Top-level comments
@@ -952,7 +957,7 @@ function loadComments() {
     const parents = sorted.filter(c => isParent(c));
     const children = sorted.filter(c => !isParent(c));
 
-    list.innerHTML = parents.reverse().map(p => {
+    list.innerHTML = parents.map(p => {
         const subReplies = children.filter(c => c.parentId == p.id);
         const pinHtml = p.isPinned ? `<div style="color:var(--primary); font-size:11px; font-weight:800; margin-bottom:5px; display:flex; align-items:center; gap:5px;">📌 Pinned</div>` : '';
         const canPin = activeVideo.uploader === currentUser;
@@ -1020,20 +1025,19 @@ function toggleRepliesDisplay(id) {
 }
 
 async function togglePinComment(id) {
-    let arr = JSON.parse(activeVideo.comments || '[]');
+    let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
     arr.forEach(c => {
         if (c.id == id) c.isPinned = !c.isPinned;
-        else if (!c.parentId) c.isPinned = false; // unpin others if pinning new (YouTube style)
+        else if (!c.parentId) c.isPinned = false; 
     });
-    await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
-    activeVideo.comments = JSON.stringify(arr);
-    loadComments();
+    const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
+    if (!error) { activeVideo.comments = arr; loadComments(); }
 }
 
 let activeReplyId = null;
 function openReply(id, user) {
     activeReplyId = id;
-    const inp = document.getElementById('com-input');
+    const inp = document.getElementById('com-input') || document.getElementById('comm-input');
     if (inp) { inp.focus(); inp.placeholder = `Replying to @${user}...`; }
     const hint = document.getElementById('reply-hint');
     if (hint) hint.style.display = 'block';
@@ -1041,7 +1045,7 @@ function openReply(id, user) {
 
 function cancelReply() {
     activeReplyId = null;
-    const inp = document.getElementById('com-input');
+    const inp = document.getElementById('com-input') || document.getElementById('comm-input');
     if (inp) inp.placeholder = 'Add a public comment...';
     const hint = document.getElementById('reply-hint');
     if (hint) hint.style.display = 'none';
@@ -1049,36 +1053,38 @@ function cancelReply() {
 
 async function addComment() {
     if (!currentUser) return openAuth();
-    const txt = document.getElementById('com-input').value.trim();
-    if (!txt) return;
+    const inp = document.getElementById('com-input') || document.getElementById('comm-input');
+    const txt = inp.value.trim(); if (!txt) return;
 
-    let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
-    const newCom = { id: Date.now().toString(36) + Math.random().toString(36).substr(2), user: currentUser, text: txt, parentId: activeReplyId || null };
-    arr.push(newCom);
-
-    const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
+    let existing = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
+    const newId = Date.now() + Math.random().toString(36).substr(2, 5);
+    const newComment = { id: newId, user: currentUser, text: txt, time: Date.now(), parentId: activeReplyId, isPinned: false };
+    
+    existing.push(newComment);
+    
+    const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(existing) }).eq('id', activeVideo.id);
     if (!error) {
-        const comp = arr.filter(c => c.id === newCom.id);
-        const comId = comp[0].id;
-        if (activeReplyId) {
-            const parent = arr.find(x => x.id == activeReplyId);
-            if (parent && parent.user !== currentUser) pushNotif(parent.user, 'reply', { from: currentUser, content: txt, videoId: activeVideo.id, videoTitle: activeVideo.title, slug: activeVideo.video_id, commentId: comId });
-        } else if (activeVideo.uploader !== currentUser) {
-            pushNotif(activeVideo.uploader, 'comment', { from: currentUser, content: txt, videoId: activeVideo.id, videoTitle: activeVideo.title, slug: activeVideo.video_id, commentId: comId });
+        activeVideo.comments = existing; inp.value = ''; cancelReply(); loadComments();
+
+        // Notifications
+        if (activeVideo.uploader !== currentUser) {
+            pushNotif(activeVideo.uploader, activeReplyId ? 'replied' : 'commented', activeVideo.id, newId);
         }
-        activeVideo.comments = JSON.stringify(arr);
-        document.getElementById('com-input').value = "";
-        cancelReply();
-        loadComments();
+        if (activeReplyId) {
+            const parent = existing.find(c => c.id == activeReplyId);
+            if (parent && parent.user !== currentUser && parent.user !== activeVideo.uploader) {
+                pushNotif(parent.user, 'replied', activeVideo.id, newId);
+            }
+        }
     }
 }
 
 async function deleteComment(id) {
     if (!confirm("Delete this comment?")) return;
-    let arr = JSON.parse(activeVideo.comments);
+    let arr = activeVideo.comments ? (typeof activeVideo.comments === 'string' ? JSON.parse(activeVideo.comments) : activeVideo.comments) : [];
     arr = arr.filter(c => c.id != id && c.parentId != id);
-    await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
-    activeVideo.comments = JSON.stringify(arr); loadComments();
+    const { error } = await supabaseClient.from('videos').update({ comments: JSON.stringify(arr) }).eq('id', activeVideo.id);
+    if (!error) { activeVideo.comments = arr; loadComments(); }
 }
 
 let isLiking = false;
