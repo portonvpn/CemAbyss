@@ -98,32 +98,13 @@ video, img.p-media { width: 100%; height: 100%; object-fit: contain; }
 input[type="text"], input[type="password"], input[type="email"], input[type="number"], select, textarea { width: 100%; background: #111; border: 1px solid var(--border); padding: 14px; border-radius: 16px; color: #fff; margin-bottom: 12px; font-family: inherit; }
 input[type="file"] { width: 100%; background: #111; border: 1px solid var(--border); padding: 10px; border-radius: 16px; color: #fff; margin-bottom: 12px; font-family: inherit; }
 button.primary-btn { width: 100%; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 100px; font-weight: 800; cursor: pointer; }
-.v-avatar { width: 44px; height: 44px; border-radius: 28px; background: #222; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; position: relative; border: 2px solid var(--border); }
-.badge, .dev-badge, [class*="rank-badge-"] { 
-    position: relative; 
-    z-index: 1; 
-    border-radius: 999px; 
-    padding: 3px 10px; 
-    font-size: 10px; 
-    font-weight: 900; 
-    margin-left: 8px; 
-    display: inline-block;
-    vertical-align: middle;
-}
-.badge::before, .dev-badge::before, [class*="rank-badge-"]::before {
-    content: ""; position: absolute; inset: -4px; border-radius: inherit;
-    background: inherit; filter: blur(8px); opacity: 0.6; z-index: -1;
-}
-.badge { background: var(--primary); color: white; }
-.dev-badge { background: #3b82f6; color: white; }
+.v-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: black; cursor: pointer; overflow: hidden; }
+.badge { background: var(--primary); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; color: white; margin-left: 4px; }
 #comments-container { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
 .comment-item { display: flex; gap: 12px; margin-bottom: 20px; position: relative; }
 .comment-text { font-size: 14px; line-height: 1.4; color: var(--text); }
 .comment-user { font-weight: 800; font-size: 13px; margin-bottom: 4px; cursor: pointer; display: flex; align-items: center; }
 .comment-user:hover { color: var(--primary); }
-.pin-indicator { color: var(--primary); font-size: 11px; font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
-.reply-toggle { margin-top: 10px; color: var(--primary); font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-.reply-toggle:hover { opacity: 0.8; transform: translateX(4px); }
 .rec-card { 
     display: flex; gap: 12px; cursor: pointer; margin-bottom: 12px; 
     padding: 10px; border-radius: 28px; background: rgba(255,255,255,0.03);
