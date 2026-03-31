@@ -4,15 +4,28 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = localStorage.getItem('cem_user'), allVideos = [], allProfiles = [], allRanks = [], allSettings = [], allAudit = [], currentCtx = 'home', authMode = 'login', activeVideo = null, editingId = null;
 
 // Initial UI Boot
-function applyMobilePerfRule() {
-    if ((window.innerWidth <= 900 || navigator.userAgent.toLowerCase().includes('mobi')) && localStorage.getItem('cem_mobile_anim') !== 'true') {
+function applyPerfSetting() {
+    const isMobile = window.innerWidth <= 900 || navigator.userAgent.toLowerCase().includes('mobi');
+    const stored = localStorage.getItem('cem_low_perf');
+    
+    let shouldBeLowPerf = false;
+    if (stored === 'true') {
+        shouldBeLowPerf = true;
+    } else if (stored === 'false') {
+        shouldBeLowPerf = false;
+    } else {
+        // Default behavior: Low mode on mobile, Cinematic on PC
+        shouldBeLowPerf = isMobile;
+    }
+
+    if (shouldBeLowPerf) {
         document.body.classList.add('mobile-low-perf');
     } else {
         document.body.classList.remove('mobile-low-perf');
     }
 }
-applyMobilePerfRule();
-window.addEventListener('resize', applyMobilePerfRule);
+applyPerfSetting();
+window.addEventListener('resize', applyPerfSetting);
 
 try {
     const main = document.getElementById('main-area');
@@ -2005,14 +2018,10 @@ function renderSettings() {
 
     if (document.getElementById('set-anon')) document.getElementById('set-anon').checked = !!p.is_anonymous;
 
-    const mCard = document.getElementById('mobile-perf-card');
-    if (mCard) {
-        if (window.innerWidth <= 900 || navigator.userAgent.toLowerCase().includes('mobi')) {
-            mCard.style.display = 'block';
-            document.getElementById('set-mobile-anim').checked = localStorage.getItem('cem_mobile_anim') === 'true';
-        } else {
-            mCard.style.display = 'none';
-        }
+    const pCard = document.getElementById('perf-card');
+    if (pCard) {
+        // Sync setting with current body class status
+        document.getElementById('set-low-perf').checked = document.body.classList.contains('mobile-low-perf');
     }
 
     // Galaxy Visibility
@@ -2084,11 +2093,15 @@ function shareVideo(e, id) {
     }
 }
 
-function toggleMobileAnim() {
-    const isChecked = document.getElementById('set-mobile-anim').checked;
-    localStorage.setItem('cem_mobile_anim', isChecked ? 'true' : 'false');
-    applyMobilePerfRule();
-    alert(isChecked ? "Heavy animations have been ENABLED. Disable this if your device lags or heats up!" : "Animations disabled to save battery and ensure smooth scrolling.");
+function togglePerfMode() {
+    const isChecked = document.getElementById('set-low-perf').checked;
+    localStorage.setItem('cem_low_perf', isChecked ? 'true' : 'false');
+    applyPerfSetting();
+    if (isChecked) {
+        alert("Low Performance Mode ENABLED: Heavy animations, backdrop blurs, and hover-previews are now disabled to ensure the smoothest possible experience.");
+    } else {
+        alert("Cinematic Mode ENABLED: All high-quality animations and background effects have been restored! This may slow down older devices.");
+    }
 }
 
 window.handleCardHover = function(el) {
