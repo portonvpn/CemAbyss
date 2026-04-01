@@ -499,6 +499,10 @@
     <div id="modal-upload" class="modal-overlay">
         <div class="modal-box" onclick="event.stopPropagation()">
             <h3>Upload</h3>
+            <div style="margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:15px;">
+                <label style="font-size:12px; color:var(--primary); font-weight:800; margin-bottom:5px; display:block;">Quick Import</label>
+                <input type="text" id="vid-yt-url" placeholder="Paste YouTube Link (e.g. youtube.com/watch?v=...)">
+            </div>
             <input type="text" id="vid-name" placeholder="Title">
             <textarea id="vid-desc" placeholder="Description..." rows="3"></textarea>
             <div style="text-align:left; margin-bottom:12px;">
@@ -537,7 +541,9 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="script.js?v=2219d51"></script>
+
 </body>
 
 </html>

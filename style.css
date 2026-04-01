@@ -232,3 +232,25 @@ button.primary-btn { width: 100%; padding: 16px; background: var(--primary); col
 .rank-tag, .badge, .dev-badge, [class*="rank-badge-"] {
     filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); /* Global fix for boxy glows */
 }
+
+/* Custom Player UI (Universal for YT & Native) */
+.custom-player-ui {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.4) 100%);
+    display: flex; flex-direction: column; justify-content: space-between;
+    opacity: 0; transition: 0.3s; z-index: 10; cursor: default; pointer-events: none;
+}
+.custom-player-ui * { pointer-events: auto; }
+#p-target:hover .custom-player-ui, .custom-player-ui.active { opacity: 1; }
+.player-bottom { padding: 20px; }
+.player-center { flex: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto !important; }
+.center-play-btn { font-size: 80px; color: #fff; filter: drop-shadow(0 0 20px rgba(0,0,0,0.5)); transition: 0.2s; transform: scale(1); pointer-events: none; }
+.player-center:hover .center-play-btn { transform: scale(1.1); color: var(--primary); }
+
+.seek-bar-container { width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 100px; cursor: pointer; position: relative; overflow: hidden; margin-bottom: 5px; }
+.seek-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+.player-bottom button { background: transparent; border: none; color: #fff; font-size: 24px; cursor: pointer; transition: 0.2s; }
+.player-bottom button:hover { color: var(--primary); transform: scale(1.1); }
+.player-time-display { font-size: 13px; color: #fff; font-weight: 800; font-family: 'Inter', sans-serif; opacity: 0.8; }
+

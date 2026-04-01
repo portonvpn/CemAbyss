@@ -959,7 +959,56 @@ async function openVideo(id) {
 
     document.getElementById('p-desc-content').innerText = activeVideo.details || "";
     const t = document.getElementById('p-target');
-    t.innerHTML = activeVideo.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? `<img src="${activeVideo.url}" class="p-media">` : `<video controls autoplay src="${activeVideo.url}"></video>`;
+    const isYT = activeVideo.url.includes('youtube.com') || activeVideo.url.includes('youtu.be');
+    
+    if (isYT) {
+        const ytId = extractYouTubeID(activeVideo.url);
+        t.innerHTML = `
+            <div id="yt-player-container" style="width:100%; height:100%; position:relative;">
+                <div id="yt-placeholder"></div>
+                <div id="yt-custom-controls" class="custom-player-ui active">
+                    <div class="player-top"></div>
+                    <div class="player-center" onclick="toggleYT()">
+                        <div id="yt-play-center" class="center-play-btn" style="display:none;">▶</div>
+                    </div>
+                    <div class="player-bottom">
+                        <div class="seek-bar-container" id="yt-seek-bar" onclick="seekYT(event)">
+                            <div id="yt-seek-fill" class="seek-fill"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <button onclick="toggleYT()" id="yt-play-btn" style="font-size:18px;">⏸</button>
+                                <span id="yt-time" class="player-time-display">0:00 / 0:00</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-size:12px; opacity:0.6;">🔊</span>
+                                    <input type="range" min="0" max="100" value="100" oninput="setYTVolume(this.value)" style="width:60px; height:4px; accent-color:var(--primary); margin:0;">
+                                </div>
+                                <button onclick="toggleYTFullscreen()" style="font-size:18px;">⛶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        window.ytPlayer = new YT.Player('yt-placeholder', {
+            height: '100%',
+            width: '100%',
+            videoId: ytId,
+            playerVars: {
+                'controls': 0, 'disablekb': 1, 'modestbranding': 1, 'rel': 0, 'showinfo': 0, 'iv_load_policy': 3, 'fs': 0, 'autoplay': 1
+            },
+            events: {
+                'onReady': onYTReady,
+                'onStateChange': onYTStateChange
+            }
+        });
+    } else {
+        t.innerHTML = activeVideo.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? `<img src="${activeVideo.url}" class="p-media">` : `<video id="native-player" controls autoplay src="${activeVideo.url}"></video>`;
+    }
+    
     await supabaseClient.from('videos').update({ views: (activeVideo.views || 0) + 1 }).eq('id', id);
     renderRecs(); loadComments();
 }
@@ -1377,12 +1426,12 @@ function generateVideoID() {
 
 async function handleUpload() {
     if (!currentUser) return openAuth();
-    const v = currentUploadFile || document.getElementById('vid-input').files[0];
+    const ytUrl = document.getElementById('vid-yt-url').value.trim();
+    const ytId = extractYouTubeID(ytUrl);
+    const v = ytId ? null : (currentUploadFile || document.getElementById('vid-input').files[0]);
     const tFile = document.getElementById('vid-thumb').files[0];
-    if (!v) return alert("Please select or PASTE a file to upload!");
 
-    // Cloudinary usually limits unsigned uploads to ~10MB for free tiers
-    if (v.size > 100 * 1024 * 1024) return alert("File is too large! Please keep it under 100MB depending on your Cloudinary limits.");
+    if (!ytId && !v) return alert("Please select a file or paste a YouTube link!");
 
     const btn = document.getElementById('publish-btn'), bar = document.getElementById('prog-bar'), bg = document.getElementById('prog-bg');
     btn.disabled = true; bg.style.display = 'block'; bar.style.width = "10%";
@@ -1395,43 +1444,42 @@ async function handleUpload() {
             const dT = await rT.json();
             if (dT.error) throw new Error("Thumb Upload Error: " + dT.error.message);
             thumbUrl = dT.secure_url;
+        } else if (ytId) {
+            thumbUrl = getYouTubeThumbnail(ytId);
         }
-        bar.style.width = "30%";
+        bar.style.width = "40%";
 
-        const fd = new FormData(); fd.append('file', v); fd.append('upload_preset', UPLOAD_PRESET);
-        const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd });
-        const d = await r.json();
+        let finalVideoUrl = ytUrl;
+        if (!ytId && v) {
+            const fd = new FormData(); fd.append('file', v); fd.append('upload_preset', UPLOAD_PRESET);
+            const r = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: "POST", body: fd });
+            const d = await r.json();
+            if (d.error) throw new Error("Video Upload Error: " + d.error.message);
+            finalVideoUrl = d.secure_url;
+        }
 
-        if (d.error) throw new Error("Video Upload Error: " + d.error.message);
-        bar.style.width = "70%";
-
-        if (!thumbUrl) thumbUrl = d.resource_type === 'video' ? d.secure_url.replace(/\.[^/.]+$/, ".jpg") : d.secure_url;
-
-        // Generate Random ID for URL routing
         const vid_slug = generateVideoID();
-
         const { error: dbError } = await supabaseClient.from('videos').insert([{
             video_id: vid_slug,
-            title: document.getElementById('vid-name').value || v.name,
+            title: document.getElementById('vid-name').value || (ytId ? "YouTube Import" : v.name),
             uploader: currentUser,
-            url: d.secure_url,
+            url: finalVideoUrl,
             thumb: thumbUrl,
-            views: 0,
-            likes: 0,
+            views: 0, likes: 0,
             details: document.getElementById('vid-desc').value
         }]);
 
-        if (dbError) throw new Error("Supabase Database Error: " + dbError.message);
-
+        if (dbError) throw new Error("Database Error: " + dbError.message);
         bar.style.width = "100%";
         setTimeout(() => location.reload(), 800);
     } catch (e) {
         console.error(e);
-        alert("Upload Failed -> " + e.message);
+        alert("Action Failed -> " + e.message);
         btn.disabled = false;
         bar.style.width = "0%";
     }
 }
+
 
 function openProfile(user) {
     if (profileAudio) { profileAudio.pause(); profileAudio = null; }
@@ -1558,6 +1606,12 @@ function closeEdit() { document.getElementById('modal-edit').style.display = 'no
 function closePlayer() { 
     document.getElementById('player-page').style.display = 'none'; 
     document.getElementById('p-target').innerHTML = ""; 
+    
+    if (window.ytPlayer) {
+        window.ytPlayer.destroy();
+        window.ytPlayer = null;
+        if (window.ytProgInt) clearInterval(window.ytProgInt);
+    }
     
     const targetView = document.getElementById(`view-${currentCtx === 'studio' || currentCtx === 'imageboard' ? 'home' : (currentCtx === 'profile' ? 'profile' : currentCtx)}`);
     if (targetView) {
@@ -2172,3 +2226,70 @@ window.handleCardLeave = function(el) {
         }
     } catch(e) {}
 };
+
+// YouTube Hybrid Engine
+function extractYouTubeID(url) {
+    if (!url) return null;
+    const regex = /(?:youtube\.com.*v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#/ ]+)/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+}
+function getYouTubeThumbnail(id) { return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`; }
+
+function onYTReady(e) {
+    e.target.playVideo();
+    window.ytProgInt = setInterval(updateYTProgress, 500);
+}
+
+function onYTStateChange(e) {
+    const playBtn = document.getElementById('yt-play-btn');
+    const centerBtn = document.getElementById('yt-play-center');
+    if (e.data === YT.PlayerState.PLAYING) {
+        if (playBtn) playBtn.innerText = '⏸';
+        if (centerBtn) centerBtn.style.display = 'none';
+        document.getElementById('yt-custom-controls').classList.remove('active');
+    } else {
+        if (playBtn) playBtn.innerText = '▶';
+        if (centerBtn) centerBtn.style.display = 'block';
+        document.getElementById('yt-custom-controls').classList.add('active');
+    }
+}
+
+function toggleYT() {
+    if (!window.ytPlayer) return;
+    const state = window.ytPlayer.getPlayerState();
+    if (state === YT.PlayerState.PLAYING) window.ytPlayer.pauseVideo();
+    else window.ytPlayer.playVideo();
+}
+
+function seekYT(e) {
+    if (!window.ytPlayer) return;
+    const rect = document.getElementById('yt-seek-bar').getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    const duration = window.ytPlayer.getDuration();
+    window.ytPlayer.seekTo(pos * duration, true);
+    updateYTProgress();
+}
+
+function updateYTProgress() {
+    if (!window.ytPlayer || !window.ytPlayer.getCurrentTime) return;
+    const cur = window.ytPlayer.getCurrentTime();
+    const dur = window.ytPlayer.getDuration();
+    if (dur > 0) {
+        document.getElementById('yt-seek-fill').style.width = (cur / dur * 100) + '%';
+        document.getElementById('yt-time').innerText = `${fmtTime(cur)} / ${fmtTime(dur)}`;
+    }
+}
+
+function setYTVolume(v) { if (window.ytPlayer) window.ytPlayer.setVolume(v); }
+function toggleYTFullscreen() {
+    const p = document.getElementById('yt-player-container');
+    if (p.requestFullscreen) p.requestFullscreen();
+    else if (p.webkitRequestFullscreen) p.webkitRequestFullscreen();
+}
+
+function fmtTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+}
