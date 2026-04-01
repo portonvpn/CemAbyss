@@ -959,6 +959,7 @@ async function openVideo(id) {
 
     document.getElementById('p-desc-content').innerText = activeVideo.details || "";
     const t = document.getElementById('p-target');
+    document.body.classList.add('theater-mode'); 
     const isYT = activeVideo.url.includes('youtube.com') || activeVideo.url.includes('youtu.be');
     
     if (isYT) {
@@ -967,7 +968,12 @@ async function openVideo(id) {
             <div id="yt-player-container" style="width:100%; height:100%; position:relative;">
                 <div id="yt-placeholder"></div>
                 <div id="yt-custom-controls" class="custom-player-ui active">
-                    <div class="player-top"></div>
+                    <div class="player-top">
+                        <div id="yt-source-tag" style="background:rgba(255,0,0,0.8); color:white; padding:6px 12px; border-radius:100px; font-size:10px; font-weight:900; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
+                            <img src="youtube.png" style="width:14px; filter:brightness(0) invert(1);"> 
+                            YOUTUBE ORIGIN
+                        </div>
+                    </div>
                     <div class="player-center" onclick="toggleYT()">
                         <div id="yt-play-center" class="center-play-btn" style="display:none;">▶</div>
                     </div>
@@ -994,20 +1000,60 @@ async function openVideo(id) {
         `;
         
         window.ytPlayer = new YT.Player('yt-placeholder', {
-            height: '100%',
-            width: '100%',
-            videoId: ytId,
-            playerVars: {
-                'controls': 0, 'disablekb': 1, 'modestbranding': 1, 'rel': 0, 'showinfo': 0, 'iv_load_policy': 3, 'fs': 0, 'autoplay': 1
-            },
-            events: {
-                'onReady': onYTReady,
-                'onStateChange': onYTStateChange
-            }
+            height: '100%', width: '100%', videoId: ytId,
+            playerVars: { 'controls': 0, 'disablekb': 1, 'modestbranding': 1, 'rel': 0, 'showinfo': 0, 'iv_load_policy': 3, 'fs': 0, 'autoplay': 1 },
+            events: { 'onReady': onYTReady, 'onStateChange': onYTStateChange }
         });
+        
+        // Attribution Add-on
+        document.getElementById('p-uploader').innerHTML += `
+            <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+                <a href="${activeVideo.url}" target="_blank" style="background:rgba(255,255,255,0.05); color:var(--text); text-decoration:none; padding:8px 15px; border-radius:100px; font-size:11px; font-weight:800; border:1px solid var(--border); display:flex; align-items:center; gap:8px;">
+                    <img src="youtube.png" style="width:16px;"> VIEW ORIGINAL
+                </a>
+            </div>
+        `;
     } else {
-        t.innerHTML = activeVideo.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? `<img src="${activeVideo.url}" class="p-media">` : `<video id="native-player" controls autoplay src="${activeVideo.url}"></video>`;
+        const isImg = activeVideo.url.match(/\.(jpg|jpeg|png|webp|gif)$/i);
+        if (isImg) {
+            t.innerHTML = `<img src="${activeVideo.url}" class="p-media">`;
+        } else {
+            t.innerHTML = `
+                <div id="native-player-container" style="width:100%; height:100%; position:relative;">
+                    <video id="native-player" autoplay src="${activeVideo.url}" style="width:100%; height:100%; object-fit:contain;"></video>
+                    <div id="native-custom-controls" class="custom-player-ui active">
+                        <div class="player-top"></div>
+                        <div class="player-center" onclick="toggleNative()">
+                            <div id="native-play-center" class="center-play-btn" style="display:none;">▶</div>
+                        </div>
+                        <div class="player-bottom">
+                            <div class="seek-bar-container" id="native-seek-bar" onclick="seekNative(event)">
+                                <div id="native-seek-fill" class="seek-fill"></div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                                <div style="display:flex; align-items:center; gap:15px;">
+                                    <button onclick="toggleNative()" id="native-play-btn" style="font-size:18px;">⏸</button>
+                                    <span id="native-time" class="player-time-display">0:00 / 0:00</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:15px;">
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span style="font-size:12px; opacity:0.6;">🔊</span>
+                                        <input type="range" min="0" max="1" step="0.1" value="1" oninput="setNativeVolume(this.value)" style="width:60px; height:4px; accent-color:var(--primary); margin:0;">
+                                    </div>
+                                    <button onclick="toggleNativeFullscreen()" style="font-size:18px;">⛶</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            const nv = document.getElementById('native-player');
+            nv.addEventListener('timeupdate', updateNativeProgress);
+            nv.addEventListener('ended', playNext);
+        }
     }
+
+
     
     await supabaseClient.from('videos').update({ views: (activeVideo.views || 0) + 1 }).eq('id', id);
     renderRecs(); loadComments();
@@ -1412,10 +1458,36 @@ window.addEventListener('paste', (e) => {
             if (item.type.indexOf('image') !== -1) {
                 const blob = item.getAsFile();
                 setUploadFile(new File([blob], `pasted_img_${Date.now()}.png`, { type: blob.type }));
+                syncUploadUI('file');
             }
         }
     }
 });
+
+function syncUploadUI(mode) {
+    const ytUrl = document.getElementById('vid-yt-url').value.trim();
+    const file = document.getElementById('vid-input').files[0] || currentUploadFile;
+    const ytSec = document.getElementById('yt-import-sec');
+    const fileSec = document.getElementById('local-file-sec');
+    const sep = document.getElementById('upload-or-sep');
+
+    if (mode === 'yt' && ytUrl) {
+        fileSec.style.opacity = '0.3';
+        fileSec.style.pointerEvents = 'none';
+        sep.style.opacity = '0.3';
+    } else if (mode === 'file' && file) {
+        ytSec.style.opacity = '0.3';
+        ytSec.style.pointerEvents = 'none';
+        sep.style.opacity = '0.3';
+    } else {
+        fileSec.style.opacity = '1';
+        fileSec.style.pointerEvents = 'auto';
+        ytSec.style.opacity = '1';
+        ytSec.style.pointerEvents = 'auto';
+        sep.style.opacity = '1';
+    }
+}
+
 
 function generateVideoID() {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -1600,12 +1672,22 @@ async function saveEdit() {
 function toggleMenu(e, id) { e.stopPropagation(); closeAllMenus(); document.getElementById(`menu-${id}`).style.display = 'block'; }
 function closeAllMenus() { document.querySelectorAll('.dropdown').forEach(d => d.style.display = 'none'); }
 async function deleteVideo(id) { if (confirm("Delete?")) { await supabaseClient.from('videos').delete().eq('id', id); location.reload(); } }
-function openUpload() { document.getElementById('modal-upload').style.display = 'flex'; }
-function closeUpload() { document.getElementById('modal-upload').style.display = 'none'; }
+function openUpload() { 
+    document.getElementById('modal-upload').style.display = 'flex'; 
+    syncUploadUI(); // Ensure fresh state
+}
+function closeUpload() { 
+    document.getElementById('modal-upload').style.display = 'none'; 
+    document.getElementById('vid-yt-url').value = "";
+    currentUploadFile = null;
+    syncUploadUI();
+}
+
 function closeEdit() { document.getElementById('modal-edit').style.display = 'none'; }
 function closePlayer() { 
     document.getElementById('player-page').style.display = 'none'; 
     document.getElementById('p-target').innerHTML = ""; 
+    document.body.classList.remove('theater-mode');
     
     if (window.ytPlayer) {
         window.ytPlayer.destroy();
@@ -2273,11 +2355,15 @@ function seekYT(e) {
 
 function updateYTProgress() {
     if (!window.ytPlayer || !window.ytPlayer.getCurrentTime) return;
+    if (document.hidden) return; // Save resources if tab is hidden
+
     const cur = window.ytPlayer.getCurrentTime();
     const dur = window.ytPlayer.getDuration();
     if (dur > 0) {
-        document.getElementById('yt-seek-fill').style.width = (cur / dur * 100) + '%';
-        document.getElementById('yt-time').innerText = `${fmtTime(cur)} / ${fmtTime(dur)}`;
+        const fill = document.getElementById('yt-seek-fill');
+        const timeDisp = document.getElementById('yt-time');
+        if (fill) fill.style.width = (cur / dur * 100) + '%';
+        if (timeDisp) timeDisp.innerText = `${fmtTime(cur)} / ${fmtTime(dur)}`;
     }
 }
 
@@ -2293,3 +2379,51 @@ function fmtTime(s) {
     const sec = Math.floor(s % 60);
     return `${m}:${sec < 10 ? '0' : ''}${sec}`;
 }
+
+// Native Video Controls
+function toggleNative() {
+    const v = document.getElementById('native-player');
+    const btn = document.getElementById('native-play-btn');
+    const center = document.getElementById('native-play-center');
+    if (v.paused) {
+        v.play();
+        btn.innerText = "⏸";
+        center.style.display = 'none';
+    } else {
+        v.pause();
+        btn.innerText = "▶";
+        center.style.display = 'block';
+    }
+}
+
+function seekNative(e) {
+    const v = document.getElementById('native-player');
+    const bar = document.getElementById('native-seek-bar');
+    const rect = bar.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    v.currentTime = pos * v.duration;
+}
+
+function updateNativeProgress() {
+    const v = document.getElementById('native-player');
+    const fill = document.getElementById('native-seek-fill');
+    const time = document.getElementById('native-time');
+    if (v && fill && time) {
+        const cur = v.currentTime;
+        const dur = v.duration;
+        fill.style.width = (cur / dur * 100) + '%';
+        time.innerText = `${fmtTime(cur)} / ${fmtTime(dur)}`;
+    }
+}
+
+function setNativeVolume(v) {
+    const player = document.getElementById('native-player');
+    if (player) player.volume = v;
+}
+
+function toggleNativeFullscreen() {
+    const p = document.getElementById('native-player-container');
+    if (p.requestFullscreen) p.requestFullscreen();
+    else if (p.webkitRequestFullscreen) p.webkitRequestFullscreen();
+}
+

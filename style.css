@@ -95,6 +95,14 @@ body.mobile-low-perf #player-page {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
+/* PERFORMANCE TURBO: Disable heavy background processing when player is open */
+body.theater-mode { background: #000 !important; }
+body.theater-mode * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; animation: none !important; }
+body.theater-mode #player-page, body.theater-mode .custom-player-ui, body.theater-mode .seek-fill { 
+    box-shadow: 0 0 30px rgba(0,0,0,0.8) !important; 
+    backdrop-filter: blur(20px) !important;
+}
+
 body.mobile-low-perf .card { transform: none !important; box-shadow: none !important; transition: none !important; z-index: 1 !important; }
 body.mobile-low-perf .card:hover { transform: none !important; border-color: var(--border) !important; }
 body.mobile-low-perf .hover-vid { display: none !important; }

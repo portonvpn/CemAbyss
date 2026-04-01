@@ -498,26 +498,38 @@
     
     <div id="modal-upload" class="modal-overlay">
         <div class="modal-box" onclick="event.stopPropagation()">
-            <h3>Upload</h3>
-            <div style="margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:15px;">
-                <label style="font-size:12px; color:var(--primary); font-weight:800; margin-bottom:5px; display:block;">Quick Import</label>
-                <input type="text" id="vid-yt-url" placeholder="Paste YouTube Link (e.g. youtube.com/watch?v=...)">
-            </div>
-            <input type="text" id="vid-name" placeholder="Title">
-            <textarea id="vid-desc" placeholder="Description..." rows="3"></textarea>
-            <div style="text-align:left; margin-bottom:12px;">
-                <label style="font-size:12px; color:var(--text-dim); margin-bottom:4px; display:block;">Custom Thumbnail
-                    (Optional)</label>
-                <input type="file" id="vid-thumb" accept="image/*" style="margin-bottom:0;">
-            </div>
-            <div style="text-align:left; margin-bottom:12px;">
-                <label style="font-size:12px; color:var(--text-dim); margin-bottom:4px; display:block;">Video / Image File</label>
-                <div id="paste-area" style="border:2px dashed rgba(255,255,255,0.1); padding:20px; text-align:center; border-radius:12px; transition: all 0.3s; position: relative;" ondragover="this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='rgba(255,255,255,0.1)'">
-                    <div id="paste-preview" style="display:none; margin-bottom:10px;"><img id="pasted-img" style="max-width:100%; max-height:150px; border-radius:8px;"></div>
-                    <p style="font-size:12px; color:gray; margin:0;" id="paste-hint">📁 Click to select file or <b>Ctrl+V</b> to Paste Image</p>
-                    <input type="file" id="vid-input" style="position:absolute; opacity:0; inset:0; cursor:pointer;" onchange="handleFileSelect(this)">
+            <h3 style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">Upload Content</h3>
+            
+            <div id="upload-choice-wrap" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:16px; padding:15px; margin-bottom:20px;">
+                <div style="margin-bottom:15px;" id="yt-import-sec">
+                    <label style="font-size:11px; color:var(--primary); font-weight:800; margin-bottom:8px; display:block; text-transform:uppercase; letter-spacing:1px;">Import from YouTube</label>
+                    <input type="text" id="vid-yt-url" placeholder="Paste YouTube Link..." oninput="syncUploadUI('yt')">
+                </div>
+
+                <div id="upload-or-sep" style="text-align:center; position:relative; margin:10px 0; color:gray; font-size:10px; font-weight:800;">
+                    <span style="background:var(--card); padding:0 10px; z-index:2; position:relative;">OR LOCAL FILE</span>
+                    <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:var(--border); z-index:1;"></div>
+                </div>
+
+                <div style="margin-top:15px;" id="local-file-sec">
+                    <label style="font-size:11px; color:var(--text-dim); font-weight:800; margin-bottom:8px; display:block; text-transform:uppercase; letter-spacing:1px;">Upload Video/Media</label>
+                    <div id="paste-area" style="border:2px dashed var(--border); padding:20px; text-align:center; border-radius:12px; transition: all 0.3s; position: relative;" ondragover="this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='var(--border)'">
+                        <div id="paste-preview" style="display:none; margin-bottom:10px;"><img id="pasted-img" style="max-width:100%; max-height:100px; border-radius:8px;"></div>
+                        <p style="font-size:12px; color:gray; margin:0;" id="paste-hint">📁 Select file or Ctrl+V</p>
+                        <input type="file" id="vid-input" style="position:absolute; opacity:0; inset:0; cursor:pointer;" onchange="syncUploadUI('file')">
+                    </div>
                 </div>
             </div>
+
+            <div id="common-fields">
+                <input type="text" id="vid-name" placeholder="Title">
+                <textarea id="vid-desc" placeholder="Tell the Abyss about this video..." rows="3"></textarea>
+                <div style="text-align:left; margin-bottom:12px;">
+                    <label style="font-size:12px; color:var(--text-dim); margin-bottom:4px; display:block;">Custom Thumbnail (Optional)</label>
+                    <input type="file" id="vid-thumb" accept="image/*" style="margin-bottom:0;">
+                </div>
+            </div>
+
             <div class="prog-bg" id="prog-bg">
                 <div class="prog-bar" id="prog-bar"></div>
             </div>
