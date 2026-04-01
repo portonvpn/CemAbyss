@@ -968,12 +968,8 @@ async function openVideo(id) {
             <div id="yt-player-container" style="width:100%; height:100%; position:relative;">
                 <div id="yt-placeholder"></div>
                 <div id="yt-custom-controls" class="custom-player-ui active">
-                    <div class="player-top">
-                        <div id="yt-source-tag" style="background:rgba(255,0,0,0.8); color:white; padding:6px 12px; border-radius:100px; font-size:10px; font-weight:900; letter-spacing:1px; display:flex; align-items:center; gap:8px;">
-                            <img src="youtube.png" style="width:14px; filter:brightness(0) invert(1);"> 
-                            YOUTUBE ORIGIN
-                        </div>
-                    </div>
+                    <div class="player-top"></div>
+
                     <div class="player-center" onclick="toggleYT()">
                         <div id="yt-play-center" class="center-play-btn" style="display:none;">▶</div>
                     </div>
