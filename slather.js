@@ -79,13 +79,18 @@ class Snake {
         
         this.visualScore += (this.score - this.visualScore) * 0.08; // Smooth growth tweening!
 
-        // Boost logic
-        this.isBoosting = false;
-        if (!this.isBot && this === slatherVars.player && slatherVars.mouse.isDown && this.score > 20) {
-            this.isBoosting = true;
-        } else if (this.isBot && this.score > 40 && Math.random() < 0.1) {
-            // Bots randomly boost if big enough, simulating erratic intelligent movement
-            this.isBoosting = true;
+        // Boost Logic (Consolidated)
+        if (!this.isBot && this === slatherVars.player) {
+            this.isBoosting = (slatherVars.mouse.isDown && this.score > 20);
+        } else if (this.isBot) {
+            // Bot boost state managed by botBoostTimer downstream
+            if (this.botBoostTimer === undefined) this.botBoostTimer = 0;
+            this.botBoostTimer--;
+            
+            if (this.botBoostTimer <= 0) {
+                this.isBoosting = (this.visualScore > 50 && Math.random() < 0.1);
+                this.botBoostTimer = 100 + Math.random() * 300; 
+            }
         }
         
         let currentSpeed = this.speed;
@@ -96,15 +101,15 @@ class Snake {
             }
             this.pulseTime += 0.3;
             
-            // Drop tiny orbs from tail
-            if (Math.random() < 0.25 && this.segments.length > 5 && !(this.isBot && slatherVars.botsNoDrop)) {
+            // Drop trail dots (Medium sized, not too many)
+            if (Math.random() < 0.15 && this.segments.length > 5 && !(this.isBot && slatherVars.botsNoDrop)) {
                 let tail = this.segments[this.segments.length - 1];
                 slatherVars.orbs.push({
-                    x: tail.x + (Math.random()-0.5)*15,
-                    y: tail.y + (Math.random()-0.5)*15,
-                    size: 3 + Math.random(),
-                    scoreValue: 0.05 * slatherVars.orbValueMod,
-                    color: this.getSkinColor(this.segments.length - 1),
+                    x: tail.x + (Math.random()-0.5)*10,
+                    y: tail.y + (Math.random()-0.5)*10,
+                    size: 4 + Math.random() * 3, // Calibrated size
+                    scoreValue: 0.12 * slatherVars.orbValueMod,
+                    color: this.getSegmentColor(this.segments.length - 1),
                     isGiant: false,
                     animTime: Math.random() * Math.PI * 2,
                     isEaten: false,
@@ -119,27 +124,58 @@ class Snake {
         
         if (slatherVars.simLag && Math.random() < 0.3) return;
 
-        // Smooth angle rotation
+        // Smooth angle rotation (Slither.io turning is more sluggish and organic)
         let angleDiff = this.targetAngle - this.angle;
         while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
         while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
         
-        let turnSpeed = Math.max(0.04, 0.1 - (this.visualScore / 10000)); // Larger snakes turn slightly slower
-        if (this.isBoosting) turnSpeed *= 0.6; // Harder to turn while boosting!
+        let turnSpeed = Math.max(0.02, 0.06 - (this.visualScore / 25000)); // Much harder to rotate!
+        if (this.isBoosting) turnSpeed *= 0.5; // Even heavier when boosting
         this.angle += angleDiff * turnSpeed;
 
         this.vx = Math.cos(this.angle) * currentSpeed;
         this.vy = Math.sin(this.angle) * currentSpeed;
 
+        let oldX = this.x;
+        let oldY = this.y;
         this.x += this.vx;
         this.y += this.vy;
 
-        // Segment updating
-        this.segments.unshift({ x: this.x, y: this.y });
-        let targetLength = Math.max(10, Math.floor(this.visualScore)); 
-        while (this.segments.length > targetLength * 2) { 
-            this.segments.pop();
+        // FIXED SEGMENT SPACING: Prevents "stretching" when boosting
+        // We now add MULTIPLE segments if we move fast, to keep spacing 100% constant!
+        if (this.segments.length === 0) {
+            this.segments.unshift({ x: this.x, y: this.y });
+        } else {
+            let lastSeg = this.segments[0];
+            let distMoved = Math.hypot(this.x - lastSeg.x, this.y - lastSeg.y);
+            let spacing = 5; 
+            
+            if (distMoved >= spacing) {
+                let numToAdd = Math.floor(distMoved / spacing);
+                
+                // MATH SAFETY: Prevent NaN or runaway growth
+                let targetLength = 10 + Math.floor((this.visualScore || 0) / 4.5); 
+                if (isNaN(targetLength) || targetLength < 10) targetLength = 10;
+                
+                // Exactly the same maxLen scaling regardless of speed
+                let maxLen = targetLength * 5.0; 
+
+                for (let k = 0; k < numToAdd; k++) {
+                    let ratio = (k + 1) / numToAdd;
+                    this.segments.unshift({
+                        x: lastSeg.x + (this.x - lastSeg.x) * ratio,
+                        y: lastSeg.y + (this.y - lastSeg.y) * ratio
+                    });
+                    
+                    // Pop for every unshift to maintain rock-solid length parity
+                    if (this.segments.length > maxLen) {
+                        this.segments.pop();
+                    }
+                }
+            }
         }
+        
+        // Physics state updates handled in the main movement block
     }
 
     updateBotLogic() {
@@ -239,20 +275,20 @@ class Snake {
 
         if (this.isBot && slatherVars.botsNoDrop) return;
 
-        // Non-Linear Scaling Drop - Satisfying for both small and big snakes
-        let massToDrop = this.score * 0.5;
+        // Balanced Drop Spray
+        let massToDrop = Math.max(0, this.score * 0.5);
+        if (isNaN(massToDrop)) massToDrop = 0;
         
-        // We use a square-root scale: smaller snakes get a "boost" in drop count
-        // while giant snakes stay clean and performant.
-        // Approx: score 10 -> ~6 orbs, score 1000 -> ~65 orbs, score 10000 -> ~180 orbs
+        // Non-Linear Scaling
         let numOrbs = Math.floor(Math.sqrt(massToDrop) * 2.8);
-        numOrbs = Math.max(3, numOrbs); // Minimum of 3 orbs for everything
+        if (isNaN(numOrbs) || numOrbs < 3) numOrbs = 3;
         
-        // Cap it at 180 to prevent lag spikes
+        // Cap it for safety
         if (numOrbs > 180) numOrbs = 180; 
         
         let segmentSpacing = Math.max(1, Math.floor(this.segments.length / numOrbs));
         let scorePerOrb = massToDrop / numOrbs;
+        if (isNaN(scorePerOrb)) scorePerOrb = 0.5;
         
         for (let i = 0; i < numOrbs; i++) {
             let idx = i * segmentSpacing;
@@ -260,113 +296,159 @@ class Snake {
             let seg = this.segments[idx];
             if (!seg) continue;
             
-            let colorStr = this.getSkinColor(i);
+            // Neon Bright Death Orbs (White/Light cores like Pic 5)
+            let colorStr = `hsl(${Math.random()*360}, 100%, 85%)`; 
+            if (Math.random() > 0.5) colorStr = '#fff'; // Many white ones like the image
             
             // Equal distribution but size reflects the magnitude of the kill
             let baseOrbSize = 9 + (scorePerOrb * 0.18);
             let pSize = Math.min(50, baseOrbSize + (Math.random() * 4));
             
             slatherVars.orbs.push({
-                x: seg.x + (Math.random() - 0.5) * 55,
-                y: seg.y + (Math.random() - 0.5) * 55,
+                x: seg.x + (Math.random() - 0.5) * 20, // Tighter trail for better visuals
+                y: seg.y + (Math.random() - 0.5) * 20,
                 size: pSize,
                 scoreValue: scorePerOrb,
                 color: colorStr,
                 animTime: Math.random() * Math.PI * 2,
                 isEaten: false,
                 isGiant: pSize > 25,
+                isNeon: true, // Special glow flag
                 eatenBy: null
             });
         }
     }
 
-    getSkinColor(index) {
-        let mod = index % 10;
-        let shadeDiff = 1 - (mod * 0.04); 
-        
+    getSegmentColor(index) {
+        // Striped / Pattern Logic
+        let segmentGroup = Math.floor(index / 10);
+        let isStriped = segmentGroup % 2 === 0;
+
         if (this.skin === 'red') {
-            return `rgb(${Math.floor(239 * shadeDiff)}, 68, 68)`; 
+            return isStriped ? '#ef4444' : '#991b1b';
         } else if (this.skin === 'blue') {
-            let b = Math.floor(246 * shadeDiff);
-            return `rgb(59, 130, ${b})`; 
+            return isStriped ? '#3b82f6' : '#1e3a8a';
         } else if (this.skin === 'gradient') {
-            let r = Math.floor(59 * (1 - mod/10));
-            let g = Math.floor(130 * (1 - mod/10));
-            let b = Math.floor(246 * (1 - mod/10));
-            return `rgb(${r}, ${g}, ${b})`;
+            // "USA/Stars" like behavior - alternating bright and dark blue
+            return isStriped ? '#60a5fa' : '#1d4ed8';
         }
-        return '#fff';
+        return '#ffffff';
     }
 
     draw(ctx) {
         let r = this.radius;
-        // Moderate step for nice grouped look without rigid outlines
-        let step = Math.max(1, Math.floor(r / 5)); 
+        // ULTRA SMOOTH rendering: Step is very small so spheres overlap into a single body
+        // Slither uses a step that is approx 1/8th of the radius
+        let step = Math.max(1, Math.floor(r / 12)); 
         
+        ctx.save();
+        
+        // Boost Body Glow
+        if (this.isBoosting) {
+            // No ghosting segments! Just a smooth core glow layer.
+            ctx.save();
+            ctx.shadowBlur = 45;
+            ctx.shadowColor = this.getSegmentColor(0);
+            ctx.globalAlpha = 0.4;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, r * 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Body Drawing Loop
         for (let i = this.segments.length - 1; i >= 0; i -= step) { 
             let seg = this.segments[i];
-            let segSize = r * (1 - (i/this.segments.length)*0.5); 
+            let segSize = r * (1 - (i/this.segments.length)*0.3); // Tapering
             if (segSize < 2) continue; 
+
+            let color = this.getSegmentColor(i);
+            
+            // OPTIMIZED PULSE-FLOW: Avoid shadowBlur in loops (very slow!)
+            if (this.isBoosting) {
+                let flow = Math.sin(this.pulseTime * 0.8 - i * 0.15);
+                if (flow > 0.3) {
+                   ctx.save();
+                   ctx.globalAlpha = 0.25 * flow;
+                   ctx.fillStyle = '#fff';
+                   ctx.beginPath();
+                   ctx.arc(seg.x, seg.y, segSize * 1.5, 0, Math.PI * 2); // Larger glow halo
+                   ctx.fill();
+                   ctx.restore();
+                }
+            }
+
+            // 3D Shading Effect (High Fidelity Gradient)
+            let grad = ctx.createRadialGradient(seg.x - segSize*0.3, seg.y - segSize*0.3, segSize*0.1, seg.x, seg.y, segSize);
+            grad.addColorStop(0, '#fff6'); 
+            grad.addColorStop(0.3, color);
+            grad.addColorStop(1, 'rgba(0,0,0,0.5)');
 
             ctx.beginPath();
             ctx.arc(seg.x, seg.y, segSize, 0, Math.PI * 2);
-            
-            // Soft base color
-            ctx.fillStyle = this.getSkinColor(i);
+            ctx.fillStyle = grad;
             ctx.fill();
             
-            // Soft inner depth (not rigid black)
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            // Subtle Glow Border
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
             ctx.stroke();
             
-            // Boost Wave Effect (travels head to tail!)
-            if (this.isBoosting) {
-                // Creates a flowing wave logic: pulseTime goes UP. i goes UP towards tail.
-                if (Math.sin(this.pulseTime * 1.5 - i * 0.15) > 0.3) {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-                    ctx.fill();
-                }
+            // Star Logic
+            if (this.skin === 'gradient' && i % 25 === 0) {
+               ctx.save();
+               ctx.globalAlpha = 0.5;
+               ctx.fillStyle = '#fff';
+               ctx.beginPath();
+               ctx.arc(seg.x, seg.y, segSize * 0.4, 0, Math.PI * 2);
+               ctx.fill();
+               ctx.restore();
             }
         }
 
-        // Head Drawing (Crisp)
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = this.getSkinColor(0);
-        ctx.fill();
+        // Eyes (Cursor-Tracking)
+        let eyeRad = r * 0.45;
+        let eyeOffset = r * 0.55;
+        let eyeAngleOffset = 0.6;
         
-        // Head glow wave sync
-        if (this.isBoosting && Math.sin(this.pulseTime * 1.5) > 0.3) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        for(let side of [-1, 1]) {
+            let ex = this.x + Math.cos(this.angle + eyeAngleOffset * side) * eyeOffset;
+            let ey = this.y + Math.sin(this.angle + eyeAngleOffset * side) * eyeOffset;
+            
+            // White part
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(ex, ey, eyeRad, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupil (Tracks Cursor Relative to Camera)
+            let dx = (slatherVars.mouse.x - slatherVars.width/2) / slatherVars.camera.zoom;
+            let dy = (slatherVars.mouse.y - slatherVars.height/2) / slatherVars.camera.zoom;
+            let lookAngle = Math.atan2(dy - (ey - slatherVars.player.y), dx - (ex - slatherVars.player.x));
+            
+            ctx.fillStyle = '#050505';
+            ctx.beginPath();
+            ctx.arc(ex + Math.cos(lookAngle)*3, ey + Math.sin(lookAngle)*3, eyeRad*0.6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Reflection
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(ex - eyeRad*0.3, ey - eyeRad*0.3, eyeRad*0.2, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        // Eyes
-        let eyeRad = r * 0.35;
-        let eyeOffset = r * 0.5;
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(this.x + Math.cos(this.angle - 0.5) * eyeOffset, this.y + Math.sin(this.angle - 0.5) * eyeOffset, eyeRad, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(this.x + Math.cos(this.angle + 0.5) * eyeOffset, this.y + Math.sin(this.angle + 0.5) * eyeOffset, eyeRad, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.fillStyle = '#050505';
-        ctx.beginPath();
-        ctx.arc(this.x + Math.cos(this.angle - 0.5) * eyeOffset + Math.cos(this.angle)*2, this.y + Math.sin(this.angle - 0.5) * eyeOffset + Math.sin(this.angle)*2, eyeRad/2.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(this.x + Math.cos(this.angle + 0.5) * eyeOffset + Math.cos(this.angle)*2, this.y + Math.sin(this.angle + 0.5) * eyeOffset + Math.sin(this.angle)*2, eyeRad/2.5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.restore();
 
         // Name tag
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.font = '800 14px "Plus Jakarta Sans", sans-serif';
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = '900 14px "Plus Jakarta Sans", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(this.name, this.x, this.y - r - 15);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.strokeText(this.name, this.x, this.y - r - 20);
+        ctx.fillText(this.name, this.x, this.y - r - 20);
     }
 }
 
@@ -675,13 +757,21 @@ function spawnOrb() {
     let hue = Math.floor(Math.random() * 360);
     let color = `hsl(${hue}, 80%, 50%)`;
 
+    // Heterogeneous natural spawning: Variety in sizes
+    let variety = Math.random();
+    let size = 5;
+    let val = 0.8;
+    
+    if (variety > 0.95) { size = 14; val = 4.5; } // rare large
+    else if (variety > 0.8) { size = 9; val = 2.0; } // uncommon med
+    
     slatherVars.orbs.push({
         x: rDist * Math.cos(theta),
         y: rDist * Math.sin(theta),
-        size: Math.random() * 2 + 5,
-        scoreValue: 0.8 * slatherVars.orbValueMod,
+        size: size + Math.random() * 2,
+        scoreValue: val * slatherVars.orbValueMod,
         color: color,
-        isGiant: false,
+        isGiant: size > 10,
         animTime: Math.random() * Math.PI * 2,
         isEaten: false,
         eatenBy: null
@@ -714,8 +804,7 @@ function renderGridAndBounds(ctx, camX, camY, zoom) {
     let endY   = Math.floor((camY + slatherVars.height / (2*zoom)) / yOffset) * yOffset + yOffset*2;
 
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
+    ctx.lineWidth = 6;
     
     for (let y = startY; y <= endY; y += yOffset) {
         let isOddRow = Math.abs(Math.floor(y / yOffset)) % 2 === 1;
@@ -725,17 +814,36 @@ function renderGridAndBounds(ctx, camX, camY, zoom) {
             let cx = x + rowXOffset;
             let cy = y;
             
-            // Draw continuous hexagon path points
-            ctx.moveTo(cx - hexWidth/2, cy - hexSize/2);
-            ctx.lineTo(cx, cy - hexSize);
-            ctx.lineTo(cx + hexWidth/2, cy - hexSize/2);
-            ctx.lineTo(cx + hexWidth/2, cy + hexSize/2);
-            ctx.lineTo(cx, cy + hexSize);
-            ctx.lineTo(cx - hexWidth/2, cy + hexSize/2);
-            ctx.lineTo(cx - hexWidth/2, cy - hexSize/2);
+            // Draw hexagon path
+            ctx.beginPath();
+            for(let i=0; i<6; i++) {
+                let ang = (Math.PI / 3) * i + (Math.PI / 6);
+                let px = cx + Math.cos(ang) * hexSize;
+                let py = cy + Math.sin(ang) * hexSize;
+                if(i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            
+            // Slither Style: Darker center, lighter edges
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.stroke();
+            
+            // Inner mini-hex for beveled look
+            ctx.beginPath();
+            for(let i=0; i<6; i++) {
+                let ang = (Math.PI / 3) * i + (Math.PI / 6);
+                let px = cx + Math.cos(ang) * (hexSize * 0.85);
+                let py = cy + Math.sin(ang) * (hexSize * 0.85);
+                if(i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
     }
-    ctx.stroke();
     
     ctx.restore();
 
@@ -933,8 +1041,13 @@ function gameLogic() {
              slatherVars.camera.zoom += (targetZoom - slatherVars.camera.zoom) * 0.05;
          }
     } else {
-         // Freepan if dead looking at death location
-         if (!slatherVars.lockCamera) slatherVars.camera.zoom += (0.5 - slatherVars.camera.zoom) * 0.02;
+         // Cinematic Death View (Zoom out fast like slither.io)
+         if (!slatherVars.lockCamera) {
+             slatherVars.camera.zoom += (0.45 - slatherVars.camera.zoom) * 0.08;
+             // Add a slow camera drift while looking at your orbs
+             slatherVars.camera.x += (Math.random() - 0.5) * 5;
+             slatherVars.camera.y += (Math.random() - 0.5) * 5;
+         }
     }
 
     slatherVars.bots.forEach(b => b.update());
@@ -982,24 +1095,28 @@ function gameLoop(timestamp) {
         ctx.beginPath();
         ctx.arc(o.x, o.y + hoverY, pSize, 0, Math.PI * 2);
         
-        if (o.isGiant) {
+        if (o.isGiant || o.isNeon) {
             ctx.fillStyle = o.color;
-            ctx.shadowBlur = 30;
+            ctx.shadowBlur = 25;
             ctx.shadowColor = o.color;
         } else {
             ctx.fillStyle = o.color;
-            ctx.shadowBlur = o.isEaten ? 5 : 15;
+            ctx.shadowBlur = o.isEaten ? 5 : 12;
             ctx.shadowColor = o.color;
         }
         ctx.fill();
         ctx.closePath();
         
-        // Reset blur for inner core
+        // Glossy Top Shine
         ctx.shadowBlur = 0;
-        
-        // Inner crisp white core (Slither.io style)
         ctx.beginPath();
-        ctx.arc(o.x, o.y + hoverY, pSize * 0.5, 0, Math.PI * 2);
+        ctx.arc(o.x - pSize*0.2, o.y + hoverY - pSize*0.2, pSize * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fill();
+        
+        // Inner Core
+        ctx.beginPath();
+        ctx.arc(o.x, o.y + hoverY, pSize * 0.4, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
         ctx.closePath();
