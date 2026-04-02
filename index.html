@@ -11,6 +11,9 @@
     <meta name="description" content="Welcome to the Abyss. Experience an ultra-modern, hyper-aesthetic video platform built for the future of interactive creators.">
     <meta name="theme-color" content="#a855f7">
 
+    <!-- WebRTC Multiplayer Engine: PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
     <!-- Open Graph / Discord / Facebook Embeds -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://cemabyss.com/">
@@ -131,6 +134,8 @@
         <div class="side-item" onclick="setContext('imageboard', this)">🖼️ Imageboard</div>
         <div class="side-item" onclick="setContext('marketplace', this)">🛍️ Marketplace</div>
         <div class="side-item" onclick="setContext('settings', this)">⚙️ Settings</div>
+        <div class="side-item" onclick="setContext('slather', this)" style="color:var(--primary); font-weight:800;">🚥 Slather.io</div>
+
         <div class="side-item" id="admin-nav-item" style="display:none; color:var(--primary)"
             onclick="setContext('admin', this)">🛡️ Admin</div>
         <div class="side-item" style="color:var(--primary); margin-top:10px;" onclick="openUpload()">📤 Upload</div>
@@ -430,6 +435,52 @@
                     onclick="fetchData()">Refresh Logs</button>
             </div>
         </div>
+        
+        <div id="view-slather" class="page-view" style="padding:0; margin:-20px; height:calc(100vh - 60px); position:relative; overflow:hidden; background:#050505;">
+            <!-- Game UI Overlay -->
+            <div id="slather-ui" style="position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px);">
+                <h1 style="color:var(--primary); font-size:4rem; margin-bottom:10px; font-weight:900; text-shadow:0 10px 30px rgba(168, 85, 247, 0.5);">SLATHER.IO <span style="font-size:1.5rem; color:var(--text-dim); border:2px solid var(--primary); padding:2px 10px; border-radius:12px; vertical-align:middle; margin-left:10px;">BETA</span></h1>
+                <p style="color:var(--text-dim); margin-bottom:30px;">Survive the Abyss. Consume Orbs. Destroy your enemies.</p>
+                
+                <div style="background:rgba(20,20,20,0.9); padding:30px; border-radius:20px; border:1px solid var(--primary); display:flex; flex-direction:column; gap:20px; width:100%; max-width:400px; box-shadow:0 15px 50px rgba(0,0,0,0.5);">
+                    <input type="text" id="slather-name" placeholder="Enter Abyss Alias..." style="font-size:18px; text-align:center;">
+                    
+                    <div>
+                        <label style="font-size:12px; color:gray; text-align:center; display:block; margin-bottom:10px;">Select Skin Glow</label>
+                        <div style="display:flex; justify-content:center; gap:15px;">
+                            <button class="slather-skin-btn active" data-skin="red" style="width:40px; height:40px; border-radius:50%; background:#ef4444; border:3px solid white; cursor:pointer; box-shadow:0 0 15px #ef4444;"></button>
+                            <button class="slather-skin-btn" data-skin="blue" style="width:40px; height:40px; border-radius:50%; background:#3b82f6; border:3px solid transparent; cursor:pointer; box-shadow:0 0 15px #3b82f6;"></button>
+                            <button class="slather-skin-btn" data-skin="gradient" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(to right, #3b82f6, #111827); border:3px solid transparent; cursor:pointer; box-shadow:0 0 15px rgba(59, 130, 246, 0.5);"></button>
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+                        <button class="primary-btn" id="slather-start" style="font-size:20px; padding:15px; background:var(--primary); color:white; border:none; width:100%;">ENTER ARENA (AUTO-MATCHMAKING)</button>
+                        <button class="primary-btn" id="slather-dev-btn" style="display:none; font-size:14px; padding:10px; background:#111; color:var(--primary); border:1px solid var(--primary); width:100%; box-shadow:0 0 10px rgba(168,85,247,0.3);">🛡️ OPEN DEV CONSOLE</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- In-Game HUD -->
+            <div id="slather-hud" style="position:absolute; inset:0; z-index:5; pointer-events:none; display:none;">
+                <div id="slather-room-display" style="position:absolute; top:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); border:1px solid var(--primary); padding:10px 20px; border-radius:12px; font-weight:800; font-size:1.2rem; color:white; box-shadow:0 0 20px rgba(168,85,247,0.5); pointer-events:auto; display:none;">
+                    SERVERS: SCANNING...
+                </div>
+                <div style="position:absolute; bottom:20px; left:20px; display:flex; flex-direction:column; gap:10px;">
+                    <button class="primary-btn" id="slather-ingame-dev-toggle" style="display:none; font-size:12px; padding:8px 15px; background:rgba(0,0,0,0.8); color:var(--primary); border:1px solid var(--primary); backdrop-filter:blur(5px); pointer-events:auto;">🛡️ DEV PANEL</button>
+                    <button id="slather-mob-boost" style="background:rgba(255,255,255,0.1); border:1px solid var(--primary); color:white; border-radius:50%; width:60px; height:60px; backdrop-filter:blur(5px); font-size:24px; pointer-events:auto; touch-action:none;">🚀</button>
+                    <div style="background:rgba(0,0,0,0.5); padding:10px 20px; border-radius:12px; border:1px solid var(--border); font-size:1.5rem; font-weight:800; pointer-events:auto;">
+                        LENGTH: <span id="slather-score" style="color:var(--primary);">10</span>
+                    </div>
+                </div>
+                <div style="position:absolute; top:20px; right:20px; background:rgba(0,0,0,0.5); padding:15px; border-radius:12px; border:1px solid var(--border); width:200px;">
+                    <h3 style="margin:0 0 10px 0; font-size:14px; color:gray; border-bottom:1px solid var(--border); padding-bottom:5px;">Leaderboard</h3>
+                    <div id="slather-leaderboard" style="display:flex; flex-direction:column; gap:5px; font-size:14px; font-weight:700;"></div>
+                </div>
+            </div>
+            
+            <canvas id="slather-canvas"></canvas>
+        </div>
     </main>
     <div id="player-page">
         <div class="player-layout">
@@ -557,6 +608,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="script.js?v=2219d51"></script>
+    <script src="slather.js"></script>
 
 </body>
 

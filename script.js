@@ -464,8 +464,8 @@ function render(target = 'v-grid', list = null) {
     let html = d.map(v => `
         <div class="card" onclick="openVideo('${v.id}')" onmouseenter="handleCardHover(this)" onmouseleave="handleCardLeave(this)" style="position:relative;">
             <div class="v-thumb-wrap">
-                <img src="${v.thumb}" class="v-img-prev" style="transition:0.3s; width:100%; height:100%; object-fit:cover;">
-                ${v.url && !v.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? `<video src="${v.url}" class="hover-vid" muted loop playsinline preload="none" style="width:100%; height:100%; object-fit:cover; position:absolute; inset:0;"></video>` : ''}
+                <img src="${v.thumb}" class="v-img-prev" onerror="handleThumbError(this, '${v.url}')" style="transition:0.3s; width:100%; height:100%; object-fit:cover;">
+                ${isDirectVideo(v.url) ? `<video src="${v.url}" class="hover-vid" muted loop playsinline preload="none" style="width:100%; height:100%; object-fit:cover; position:absolute; inset:0;"></video>` : ''}
                 <div class="dots-btn" onclick="toggleMenu(event, '${v.id}')">⋮</div>
                 <div id="menu-${v.id}" class="dropdown">
                     <div onclick="shareVideo(event, '${v.id}')">🔗 Share Link</div>
@@ -1072,7 +1072,7 @@ function renderRecs() {
         return !(p && p.is_shadowbanned);
     });
     const l = validRecs.slice(0, 10);
-    rG.innerHTML = l.map(v => `<div class="rec-card" onclick="openVideo('${v.id}')"><div class="rec-thumb"><img src="${v.thumb}" style="width:100%;height:100%;object-fit:cover"></div><div class="rec-info"><div class="rec-title">${v.title}</div><div style="font-size:12px;color:gray;margin-top:4px;display:flex;align-items:center;">${formatName(v.uploader)}</div></div></div>`).join('');
+    rG.innerHTML = l.map(v => `<div class="rec-card" onclick="openVideo('${v.id}')"><div class="rec-thumb"><img src="${v.thumb}" onerror="handleThumbError(this, '${v.url}')" style="width:100%;height:100%;object-fit:cover"></div><div class="rec-info"><div class="rec-title">${v.title}</div><div style="font-size:12px;color:gray;margin-top:4px;display:flex;align-items:center;">${formatName(v.uploader)}</div></div></div>`).join('');
 }
 
 function playNext() {
@@ -1397,8 +1397,8 @@ function renderSubscriptions() {
         let vHtml = latest.map(v => `
             <div class="card" onclick="openVideo('${v.id}')" onmouseenter="handleCardHover(this)" onmouseleave="handleCardLeave(this)" style="min-width:220px; max-width:250px; cursor:pointer; position:relative;">
                 <div class="v-thumb-wrap" style="aspect-ratio:16/9; border-radius:12px; overflow:hidden; position:relative;">
-                    <img src="${v.thumb}" class="v-img-prev" style="width:100%; height:100%; object-fit:cover; transition:0.3s;">
-                    ${v.url && !v.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? `<video src="${v.url}" class="hover-vid" muted loop playsinline preload="none" style="width:100%; height:100%; object-fit:cover; position:absolute; inset:0;"></video>` : ''}
+                    <img src="${v.thumb}" class="v-img-prev" onerror="handleThumbError(this, '${v.url}')" style="width:100%; height:100%; object-fit:cover; transition:0.3s;">
+                    ${isDirectVideo(v.url) ? `<video src="${v.url}" class="hover-vid" muted loop playsinline preload="none" style="width:100%; height:100%; object-fit:cover; position:absolute; inset:0;"></video>` : ''}
                 </div>
                 <div style="font-weight:700; font-size:13px; margin-top:8px; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" title="${v.title}">${v.title}</div>
             </div>
@@ -2321,7 +2321,22 @@ function extractYouTubeID(url) {
     const match = url.match(regex);
     return match ? match[1] : null;
 }
-function getYouTubeThumbnail(id) { return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`; }
+function getYouTubeThumbnail(id) { 
+    return `https://img.youtube.com/vi/${id}/hqdefault.jpg`; 
+}
+function isDirectVideo(url) {
+    return url && url.match(/\.(mp4|webm|ogg|mov)$/i);
+}
+function handleThumbError(el, videoUrl) {
+    const ytId = extractYouTubeID(videoUrl);
+    if (ytId) {
+        el.src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    } else if (isDirectVideo(videoUrl)) {
+        el.style.display = 'none';
+    } else {
+        el.src = 'notif.png';
+    }
+}
 
 function onYTReady(e) {
     e.target.playVideo();
